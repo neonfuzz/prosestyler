@@ -1,67 +1,6 @@
 #!/bin/python3
 
 
-# Goals:
-#   [X] provide all suggestions with context
-#       [X] surrounding sentence
-#       [X] replace only word shown
-#       [X] put suggestions in multiple columns if over a certain length
-#       [X] make word different color in printout (or otherwise highlight)
-#       [X] option to replace entire sentence
-#       [X] option for "leave be"
-#       [?] help banner explaining what e.g. nominalizations are
-#   [X] spell check
-#       [X] input your own word
-#       [X] including scientific word list
-#       [X] add my words to the scientific word list
-#       [?] option to ignore for rest of document
-#       [?] option to add to dictionary?
-#   [X] grammar check
-#       [X] basic check
-#       [X] don't highlight entire sentence
-#       [X] don't bug about smart quotes
-#   [?] homophone pointer-outer
-#       [X] basic checker
-#       [X] catch "it's"
-#       [?] provides example for each homophone
-#   [X] synonym suggester (thesaurus)
-#       [X] basic implementation
-#       [X] don't suggest weak words
-#       [X] vague/overused verbs
-#       [X] vague/overused adjectives
-#       [X] vague/overused nouns
-#       [X] filler words
-#       [X] cliches / overused phrases / filler phrases
-#       [X] nominalizations
-#       [X] adverbs
-#           [X] better implementation
-#   [?] passive voice
-#       [?] Catch more complex phrases
-#   [?] sentence tense
-#   [?] pronouns
-#   [?] frequent words (lemmas)
-#       [X] basic implementation
-#       [?] distance between frequent words
-#   [?] sentence length and variation
-#       [X] visualizer
-#       [?] function to edit 1+ sentences
-#       [?] ask user if they'd like to edit any sentences
-#
-#   [ ] User experience
-#       [X] newlines should break sentences
-#           [X] and stay broken
-#       [X] 'clean' method to remove "  ", " .", " ," etc.
-#           [?] run after each step?
-#       [ ] SAVE after each sentence (esp. for re-write things)
-#           [ ] __init__ will need a save file name.
-#           [ ] implement
-#   [X] generalize code that needs generalizing
-#   [X] proper documentation on everything
-#   [X] read in from LaTeX
-#       [X] detex + a little manual interference
-#       [X] +diff
-
-
 from math import ceil
 from string import punctuation
 
@@ -159,7 +98,6 @@ def suggest(word, suggestions, sentence, underline=None,
         replacing the entire sentence?
     """
 
-    # NOTE: if word not in list, return tokens
     # Print the sentence with the underlined section underlined.
     if underline is None:
         print('\n%s' % sentence)
@@ -187,7 +125,6 @@ def suggest(word, suggestions, sentence, underline=None,
         n = int(user_input)
         if n == 0:
             return word, ss
-        # Note: will throw an error if number doesn't exist in list
         return suggestions[n-1], ss
     except ValueError:
         if can_replace_sent is True and user_input == 'ss':
@@ -282,7 +219,6 @@ class Text(object):
             Ask user for input on what corrections to make.
             Return sentence with corrections.
         """
-        # NOTE: only highlights first instance
         if underline is None:
             u_start = sent.find(phrase)
             if u_start != -1:
@@ -370,11 +306,6 @@ class Text(object):
         self._clean()
 
     def passive_voice(self):
-        # NOTE: multiple PV per sentence don't get updated in print
-        # NOTE: negatives e.g. "was not included" don't get caught
-        #   also adverbs e.g. "were randomly substituted"
-        #   also e.g. "was then equilibrated"
-        #   (a lot of these get caught by 'weak verbs')
         """Point out (many) instances of passive voice."""
         sents = []
         for sent in self._sentences:
@@ -407,7 +338,6 @@ class Text(object):
 
     def weak_words(self):
         """Find weak words and suggest stronger ones."""
-        # NOTE: why does this catch "motif"?
         sents = []
         for sent in self._sentences:
             tokens = self._gen_tokens(sent)
@@ -439,7 +369,6 @@ class Text(object):
 
     def adverbs(self):
         """Find adverbs and verbs, offer better verbs."""
-        # NOTE: catching too many things
         sents = []
         for sent in self._sentences:
             tokens = self._gen_tokens(sent)
