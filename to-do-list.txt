@@ -50,6 +50,7 @@ Formatting:
 
 
 Bugs:
+    [ ] visualize_length should ignore '\n\n' sentences
     [ ] _replace_phrase only highlights first instance of phrase
     [ ] multiple passive voice / sentence don't get updated in print
     [ ] negatives e.g. "was not included" don't get caught
@@ -59,6 +60,8 @@ Bugs:
     [ ] adverbs catches things that are not adverbs
     [ ] if suggest receives ## input that is not an option, it should
           have a cleaner resolution than throwing an error
+    [ ] most text should use the regular English sentence tokenizer;
+        figure out how to train on scientific stuffs
 
 
 Implemented:

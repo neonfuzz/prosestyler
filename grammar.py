@@ -505,7 +505,7 @@ class Text(object):
                  if tok == "'"
                  and i > 0 and i+1 < len(tokens)
                  and tokens[i+1] in cont_list]
-        for c in conts:
+        for c in conts[::-1]:
             tokens = tokens[:c-1] + [''.join(tokens[c-1:c+2])] + tokens[c+2:]
         return tokens
 
