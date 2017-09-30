@@ -11,6 +11,7 @@ import lxml  # Needed for thesaurus
 import nltk
 from nltk.corpus import stopwords
 from nltk.corpus import wordnet as wn
+import numpy as np
 from py_thesaurus import WordAnalyzer  # Thesaurus
 
 from cliches import cliches
@@ -395,21 +396,65 @@ class Text(object):
             sents += [sent]
         self.sentences = sents
 
+    def _ask_user(self, word, freq, close):
+        """Ask user if they want to view words in close proximity."""
+        print("'%s' appeard %s times (%.02f%%)." % (
+            word, freq, freq/len(self._words)*100))
+        ans = input(
+            'Would you like to view occurances in proximity? (%s) ' % close)
+        while len(ans) < 1:
+            ans = input('Sorry, try again: ')
+        return ans[0].lower()
+
     def frequent_words(self, n=10):
-        """Print a list of the most commonly used words."""
+        """
+        Print a list of the most commonly used words.
+
+        Ask user word-per-word if they'd like to view occurances
+        in close proximity.
+        """
         stopwords = nltk.corpus.stopwords.words('english')
-        morphy_tags = [(x, self._penn2morphy(pos)) for x, pos in self._tags]
-        lemmas = [
-            self._lemmatizer.lemmatize(
-                x.lower(), pos) for x, pos in morphy_tags
-            if pos is not None
-            and x not in stopwords
-            and x != '\n']
-        distr = [(k, v) for k, v in nltk.FreqDist(lemmas).items() if v > 1]
+        penn_tags = nltk.pos_tag(self._tokens)
+        morphy_tags = [(x, self._penn2morphy(pos)) for x, pos in penn_tags]
+
+        lemmas = np.array([
+            (x, y, self._lemmatizer.lemmatize(x.lower(), y or 'n'))
+            for x, y in morphy_tags])
+        distr = [(k, v) for k, v in nltk.FreqDist(lemmas[:, 2]).items()
+                 if v > 1
+                 and k not in stopwords
+                 and k not in punctuation
+                 and k != '\n'
+                 and k != ' ']
         distr.sort(key=lambda x: x[1], reverse=True)
-        for i in distr[:n]:
-            perc = i[1] / len(self._words) * 100
-            print('{: >14}: {:}, {:}%'.format(i[0], i[1], perc))
+
+        # Print n most frequent words.
+        for i, j in distr[:n]:
+            print('%s: %.02f%%' % (i, j/len(self._words)*100))
+        print()
+
+        # Ask if user wants to see words in proximity.
+        print('-----')
+        for word, freq in distr:
+            occurs = np.array([
+                i for i, lem in enumerate(lemmas) if lem[2] == word])
+            dists = occurs[1:] - occurs[:-1]
+            # m can be less than 30 if the word occurs a lot.
+            m = min(30, int(len(self._words)/freq/3))
+            to_print = occurs[np.where(dists < m)]
+            if len(to_print) > 0:
+                print('-----')
+                yn = self._ask_user(word, freq, len(to_print))
+                print('-----')
+                if yn == 'y':
+                    for i in to_print:
+                        start = max(0, i-int(m/2))
+                        stop = min(i+int(1.5*m), len(lemmas))
+                        tokens = lemmas[start:stop]
+                        indices = np.where(tokens[:, 2] == word)[0]
+                        Color.tokenprint(tokens[:, 0], indices)
+                        input('Enter to continue. ')
+                        print('-----')
 
     def visualize_length(self, char='X'):
         """Produce a visualization of sentence length."""
@@ -475,7 +520,6 @@ class Text(object):
 
     def _clean(self):
         """Remove unneccesary whitespace."""
-#         sents = [s.strip() for s in self._sentences]
         sents = self._sentences
         for i in ',:;.?! ':
             sents = [s.replace(' %s' % i, i) for s in sents]
