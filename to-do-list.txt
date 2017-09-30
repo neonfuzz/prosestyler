@@ -48,8 +48,10 @@ Features:
         [ ] write an sh script to facilitate workflow
 
 
-Formatting:
+Cleanup:
     [ ] Text class / related scripts should be different from "run" script
+    [ ] _replace_phrase should utilize Color.tokenprint
+    [ ] possibly also _replace_one_word
 
 
 Bugs:
@@ -85,3 +87,7 @@ Implemented:
             [X] better implementation
     [X] generalize code that needs generalizing
     [X] proper documentation on everything
+Implemented (cleanup):
+    [X] Color.print should have a less vague name
+    [X] Color object should really just be a module (after rename occurs)
+    [X] colors.py needs docstrings

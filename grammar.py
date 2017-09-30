@@ -15,7 +15,7 @@ import numpy as np
 from py_thesaurus import WordAnalyzer  # Thesaurus
 
 from cliches import cliches
-from colors import Color
+import colors
 from filler_words import filler_words
 from homophone_list import homophone_list
 from nominalizations import denominalize
@@ -103,7 +103,7 @@ def suggest(word, suggestions, sentence, underline=None,
     if underline is None:
         print('\n%s' % sentence)
     else:
-        Color.print('\n%s' % sentence, underline[0], underline[1])
+        colors.colorprint('\n%s' % sentence, underline[0], underline[1])
     print('Possible suggestions for "%s":' % word)
 
     # Print list of suggestions, as well as custom options.
@@ -452,7 +452,7 @@ class Text(object):
                         stop = min(i+int(1.5*m), len(lemmas))
                         tokens = lemmas[start:stop]
                         indices = np.where(tokens[:, 2] == word)[0]
-                        Color.tokenprint(tokens[:, 0], indices)
+                        colors.tokenprint(tokens[:, 0], indices)
                         input('Enter to continue. ')
                         print('-----')
 
