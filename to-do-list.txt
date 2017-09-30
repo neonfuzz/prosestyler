@@ -26,7 +26,10 @@ Features:
     [ ] pronouns
     [ ] frequent words (lemmas)
         [X] basic implementation
-        [ ] distance between frequent words
+        [X] distance between frequent words
+        [X] interactive
+        [ ] bigrams
+        [ ] trigrams
     [ ] sentence length and variation
         [X] visualizer
         [ ] function to edit 1+ sentences
