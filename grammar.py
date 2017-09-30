@@ -82,59 +82,6 @@ def thesaurus(word):
             and w not in weak_verbs]
 
 
-def suggest(word, suggestions, sentence, underline=None,
-            can_replace_sent=False):
-    """
-    Ask the user to provide input on errors or style suggestions.
-
-    Arguments:
-    word - the word or phrase to be replaced
-    suggestions - a list of possible suggestions
-    sentence - the context surrounding the word
-
-    Optional arguments:
-    underline - a 2-element list with the start and end
-        points for underlining
-    can_replace_sent - should the user have the option of
-        replacing the entire sentence?
-    """
-
-    # Print the sentence with the underlined section underlined.
-    if underline is None:
-        print('\n%s' % sentence)
-    else:
-        colors.colorprint('\n%s' % sentence, underline[0], underline[1])
-    print('Possible suggestions for "%s":' % word)
-
-    # Print list of suggestions, as well as custom options.
-    if len(suggestions) == 0:
-        suggestions += ['']  # Play nicely with print_rows.
-    print_rows(suggestions)
-    print(' (0) Leave be.')
-    if can_replace_sent is True:
-        print('(ss) Edit entire sentence.')
-    print(' (?) Input your own.')
-
-    # Get user input.
-    # If a number, return listed suggestion.
-    # If 0, return sentence as-is.
-    # If 'ss', ask user to replace entire sentence.
-    # Else: return user-input.
-    ss = False  # Replace entire sentence.
-    user_input = input('Your choice: ')
-    try:
-        n = int(user_input)
-        if n == 0:
-            return word, ss
-        return suggestions[n-1], ss
-    except ValueError:
-        if can_replace_sent is True and user_input == 'ss':
-            ss = True
-            sent = input('Replace entire sentence: ')
-            return sent, ss
-        return user_input, ss
-
-
 class Text(object):
     """
     A fancy text object which can provide style suggestions.
@@ -191,26 +138,107 @@ class Text(object):
         with open(filename, 'w') as myfile:
             myfile.write(self._string)
 
-    def _replace_one_word(self, tokens, index, suggestions,
-                          can_replace_sent=False):
+    def _suggest_toks(self, tokens, indices, suggestions,
+                     can_replace_sent=False):
         """
-        Given tokens, an index, and suggestions:
-            Determine what the replaced word should be.
-            Determine where it is highlighted in the sentence.
-            Ask user for input on what corrections to make.
-            If they modified the entire sentence, return those tokens.
-            Else replace the one token and return updated list.
+        Ask the user to provide input on errors or style suggestions.
+    
+        Arguments:
+        tokens - tokens of the sentence in question
+        indices - indices of tokens to be replaced
+        suggestions - a list of possible suggestions
+    
+        Optional arguments:
+        can_replace_sent - should the user have the explicit option
+            of replacing the entire sentence?
         """
-        tok = tokens[index]
-        u_start = len(''.join(tokens[:index]))
-        u_end = u_start + len(tok)
-        r, ss = suggest(tok, suggestions, ''.join(tokens), (u_start, u_end),
-                        can_replace_sent)
-        if ss is True:  # Replace entire sentence
-            tokens = self._gen_tokens(r)
-        elif ss is False:
-            tokens[index] = r
+
+        # Print the sentence with the desired token underlined.
+        print()
+        colors.tokenprint(tokens, indices)
+        phrase = ''.join([tokens[i] for i in indices])
+        print('Possible suggestions for "%s":' % phrase)
+
+        # Print list of suggestions, as well as custom options.
+        if len(suggestions) == 0:
+            suggestions += ['']  # Play nicely with print_rows.
+        print_rows(suggestions)
+        print(' (0) Leave be.')
+        if can_replace_sent is True:
+            print('(ss) Edit entire sentence.')
+        print(' (?) Input your own.')
+
+        # Get user input.
+        # If a number, replace with suggestion.
+        # If 0, return sentence as-is.
+        # If 'ss', ask user to replace entire sentence.
+        # Else: return user-input.
+        user_input = input('Your choice: ')
+        try:
+            n = int(user_input)
+            if n > 0:
+                ans = suggestions[n-1]
+                tokens = tokens[:indices[0]] + [ans] + tokens[indices[-1]+1:]
+        except ValueError:
+            if user_input == 'ss':
+                sent = input('Replace entire sentence: ')
+                tokens = self._gen_tokens(sent)
+            else:
+                ans = user_input
+                tokens = tokens[:indices[0]] + [ans] + tokens[indices[-1]+1:]
         return tokens
+
+    def _suggest(self, word, suggestions, sentence, underline=None,
+                can_replace_sent=False):
+        """
+        Ask the user to provide input on errors or style suggestions.
+    
+        Arguments:
+        word - the word or phrase to be replaced
+        suggestions - a list of possible suggestions
+        sentence - the context surrounding the word
+    
+        Optional arguments:
+        underline - a 2-element list with the start and end
+            points for underlining
+        can_replace_sent - should the user have the option of
+            replacing the entire sentence?
+        """
+    
+        # Print the sentence with the underlined section underlined.
+        if underline is None:
+            print('\n%s' % sentence)
+        else:
+            colors.colorprint('\n%s' % sentence, underline[0], underline[1])
+        print('Possible suggestions for "%s":' % word)
+    
+        # Print list of suggestions, as well as custom options.
+        if len(suggestions) == 0:
+            suggestions += ['']  # Play nicely with print_rows.
+        print_rows(suggestions)
+        print(' (0) Leave be.')
+        if can_replace_sent is True:
+            print('(ss) Edit entire sentence.')
+        print(' (?) Input your own.')
+    
+        # Get user input.
+        # If a number, return listed suggestion.
+        # If 0, return sentence as-is.
+        # If 'ss', ask user to replace entire sentence.
+        # Else: return user-input.
+        ss = False  # Replace entire sentence.
+        user_input = input('Your choice: ')
+        try:
+            n = int(user_input)
+            if n == 0:
+                return word, ss
+            return suggestions[n-1], ss
+        except ValueError:
+            if can_replace_sent is True and user_input == 'ss':
+                ss = True
+                sent = input('Replace entire sentence: ')
+                return sent, ss
+            return user_input, ss
 
     def _replace_phrase(self, sent, phrase, suggestions,
                         can_replace_sent=True, underline=None):
@@ -227,7 +255,8 @@ class Text(object):
                 underline = (u_start, u_end)
             else:
                 underline = None
-        r, ss = suggest(phrase, suggestions, sent, underline, can_replace_sent)
+        r, ss = self._suggest(
+            phrase, suggestions, sent, underline, can_replace_sent)
         if ss is True:
             sent = r
         elif ss is False:
@@ -247,8 +276,8 @@ class Text(object):
                 if tok == ' ' or tok == '\n' or tok in punctuation:
                     continue
                 if self._dict.check(tok) is False:
-                    tokens = self._replace_one_word(
-                        tokens, i, self._dict.suggest(tok))
+                    tokens = self._suggest_toks(
+                        tokens, [i], self._dict.suggest(tok))
             sents += [''.join(tokens)]
         self.sentences = sents
 
@@ -284,8 +313,8 @@ class Text(object):
                 for homophones in homophone_list:
                     for h in homophones:
                         if h == tok.lower():
-                            tokens = self._replace_one_word(
-                                tokens, i, homophones)
+                            tokens = self._suggest_toks(
+                                tokens, [i], homophones)
             sents += [''.join(tokens)]
         self.sentences = sents
 
@@ -332,8 +361,8 @@ class Text(object):
             for noun in nouns:
                 denoms = denominalize(noun)
                 if len(denoms) > 0 and noun in tokens:
-                    tokens = self._replace_one_word(
-                        tokens, tokens.index(noun), denoms, True)
+                    tokens = self._suggest_toks(
+                        tokens, [tokens.index(noun)], denoms, True)
             sents += [''.join(tokens)]
         self.sentences = sents
 
@@ -351,8 +380,9 @@ class Text(object):
                             or lemma in weak_adjs
                             or lemma in weak_nouns) \
                             and w[0] in tokens:
-                        tokens = self._replace_one_word(
-                            tokens, tokens.index(w[0]), thesaurus(w[0]), True)
+                        tokens = self._suggest_toks(
+                            tokens, [tokens.index(w[0])],
+                            thesaurus(w[0]), True)
             sents += [''.join(tokens)]
         self.sentences = sents
 
@@ -363,7 +393,7 @@ class Text(object):
             tokens = self._gen_tokens(sent)
             for i, tok in enumerate(tokens):
                 if tok.lower() in filler_words:
-                    tokens = self._replace_one_word(tokens, i, [], True)
+                    tokens = self._suggest_toks(tokens, [i], [], True)
             sents += [''.join(tokens)]
         self.sentences = sents
         self._clean()

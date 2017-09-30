@@ -50,8 +50,10 @@ Features:
 
 Cleanup:
     [ ] Text class / related scripts should be different from "run" script
+    [ ] all methods which use _replace_phrase should get updated
+        to _suggest_toks
     [ ] _replace_phrase should utilize Color.tokenprint
-    [ ] possibly also _replace_one_word
+    [ ] nominalizations can be generalized more to not use tokens.index(noun)
 
 
 Bugs:
@@ -91,3 +93,5 @@ Implemented (cleanup):
     [X] Color.print should have a less vague name
     [X] Color object should really just be a module (after rename occurs)
     [X] colors.py needs docstrings
+    [X] _replace_one_word should utilize Color.tokenprint
+        (replaced with _suggest_toks)

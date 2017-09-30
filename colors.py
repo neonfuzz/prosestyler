@@ -23,12 +23,18 @@ def colorprint(sent, start=0, end=None, style=None):
           + boring + sent[end+1:])
 
 
-def tokenprint(tokens, indices, style=None):
+def tokenprint(tokens, indices=[], style=None):
     """
     Print sentences from token form with given indices underlined.
     """
+
+    if indices == []:
+        print(''.join(tokens))
+        return
+
     if style is None:
         style = underline
+
     mystr = ''.join(tokens[:indices[0]])
     for i, index in enumerate(indices):
         if i == len(indices)-1:
