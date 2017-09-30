@@ -1,6 +1,4 @@
 
-import re
-
 
 class Color(object):
     purple = '\033[95m'
