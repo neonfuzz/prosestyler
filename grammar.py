@@ -188,84 +188,6 @@ class Text(object):
                 tokens = tokens[:indices[0]] + [ans] + tokens[indices[-1]+1:]
         return tokens
 
-    def _suggest(self, word, suggestions, sentence, underline=None,
-                can_replace_sent=False):
-        """
-        Ask the user to provide input on errors or style suggestions.
-    
-        Arguments:
-        word - the word or phrase to be replaced
-        suggestions - a list of possible suggestions
-        sentence - the context surrounding the word
-    
-        Optional arguments:
-        underline - a 2-element list with the start and end
-            points for underlining
-        can_replace_sent - should the user have the option of
-            replacing the entire sentence?
-        """
-    
-        # Print the sentence with the underlined section underlined.
-        if underline is None:
-            print('\n%s' % sentence)
-        else:
-            colors.colorprint('\n%s' % sentence, underline[0], underline[1])
-        print('Possible suggestions for "%s":' % word)
-    
-        # Print list of suggestions, as well as custom options.
-        if len(suggestions) == 0:
-            suggestions += ['']  # Play nicely with print_rows.
-        print_rows(suggestions)
-        print(' (0) Leave be.')
-        if can_replace_sent is True:
-            print('(ss) Edit entire sentence.')
-        print(' (?) Input your own.')
-    
-        # Get user input.
-        # If a number, return listed suggestion.
-        # If 0, return sentence as-is.
-        # If 'ss', ask user to replace entire sentence.
-        # Else: return user-input.
-        ss = False  # Replace entire sentence.
-        user_input = input('Your choice: ')
-        try:
-            n = int(user_input)
-            if n == 0:
-                return word, ss
-            return suggestions[n-1], ss
-        except ValueError:
-            if can_replace_sent is True and user_input == 'ss':
-                ss = True
-                sent = input('Replace entire sentence: ')
-                return sent, ss
-            return user_input, ss
-
-    def _replace_phrase(self, sent, phrase, suggestions,
-                        can_replace_sent=True, underline=None):
-        """
-        Given a sentence, phrase, and suggestions:
-            Determine where underline should be, if none given.
-            Ask user for input on what corrections to make.
-            Return sentence with corrections.
-        """
-        if underline is None:
-            u_start = sent.find(phrase)
-            if u_start != -1:
-                u_end = u_start + len(phrase)
-                underline = (u_start, u_end)
-            else:
-                underline = None
-        r, ss = self._suggest(
-            phrase, suggestions, sent, underline, can_replace_sent)
-        if ss is True:
-            sent = r
-        elif ss is False:
-            if underline is not None:
-                sent = sent[:underline[0]] + r + sent[underline[1]:]
-            else:
-                sent = sent.replace(phrase, r)
-        return sent
-
     def spelling(self):
         """Run a spell check on the text!"""
         # Courtesy of http://www.jpetrie.net/scientific-word-list-for-spell-checkersspelling-dictionaries/
@@ -293,9 +215,11 @@ class Text(object):
                 if err.fromx < 0 or err.tox < 0:
                     errors = errors[1:]
                     continue
-                sent_new = self._replace_phrase(
-                    sent, sent[err.fromx:err.tox], err.replacements,
-                    can_replace_sent=True, underline=[err.fromx, err.tox])
+                tokens = [
+                    sent[:err.fromx], sent[err.fromx:err.tox], sent[err.tox:]]
+                tokens = self._suggest_toks(
+                    tokens, [1], err.replacements, True)
+                sent_new = ''.join(tokens)
                 if sent_new == sent:
                     errors = errors[1:]
                 else:
@@ -321,16 +245,21 @@ class Text(object):
     def cliches(self):
         """Highlight cliches and offer suggestions."""
         sents = []
-        lemmatizer = nltk.stem.WordNetLemmatizer()
         for sent in self._sentences:
             tokens = self._gen_tokens(sent)
-            lem = ''.join([lemmatizer.lemmatize(t) for t in tokens]).lower()
+            lem = ''.join([
+                self._lemmatizer.lemmatize(t) for t in tokens]).lower()
             for k in cliches.keys():
                 if k in lem:
-                    sent = self._replace_phrase(sent, k, cliches[k])
-                    tokens = self._gen_tokens(sent)
-                    lem = ''.join([
-                        lemmatizer.lemmatize(t) for t in tokens]).lower()
+                    start = max(0, sent.find(k))
+                    if start == 0:
+                        end = len(sent)
+                    else:
+                        end = min(len(sent), start+len(k))
+                    tokens = [sent[:start], sent[start:end], sent[end:]]
+                    tokens = self._suggest_toks(
+                        tokens, [1], cliches[k])
+                    sent = ''.join(tokens)
             sents += [sent]
         self.sentences = sents
         self._clean()
@@ -339,15 +268,20 @@ class Text(object):
         """Point out (many) instances of passive voice."""
         sents = []
         for sent in self._sentences:
-            words = self._gen_words(sent=sent)
+            tokens = self._gen_tokens(sent)
+            words = self._gen_words(tokens=tokens)
             tags = self._gen_tags(words=words)
             vbns = [w[0] for w in tags if w[1] == 'VBN']
             if len(vbns) > 0:
                 for vbn in vbns:
                     i = words.index(vbn)
                     if tags[i-1][1].startswith('V'):
-                        phrase = ' '.join([words[i-1], words[i]])
-                        sent = self._replace_phrase(sent, phrase, [])
+                        j = tokens.index(vbn)
+                        tokens = self._suggest_toks(
+                            tokens, range(j-2, j+1), [], True)
+                        words = self._gen_words(tokens=tokens)
+                        tags = self._gen_tags(words=words)
+                        sent = ''.join(tokens)
             sents += [sent]
         self.sentences = sents
 
@@ -403,26 +337,20 @@ class Text(object):
         sents = []
         for sent in self._sentences:
             tokens = self._gen_tokens(sent)
-            words = [w for w in tokens
-                     if w != ' ' and w not in punctuation]
-            adverbs = [w[0] for w in self._gen_tags(words=words)
-                       if w[1].startswith('RB')]
-            if len(adverbs) > 0:
-                verbs = [w[0] for w in self._gen_tags(words=words)
-                         if w[1].startswith('V')]
-                for adv in adverbs:
-                    adv_i = words.index(adv)
-                    v_is = [words.index(v) for v in verbs]
-                    v_i = [i for i in v_is
-                           if i+1 == adv_i or i-1 == adv_i]
-                    if len(v_i) != 1:
-                        break
-                    v_i = v_i[0]
-                    indices = [adv_i, v_i]
-                    indices.sort()
-                    phrase = ' '.join([words[i] for i in indices])
-                    sent = self._replace_phrase(
-                        sent, phrase, thesaurus(words[v_i]))
+            tags = self._gen_tags(sent=sent)
+            adverbs = [(i, w[0]) for i, w in enumerate(tags)
+                        if w[1].startswith('RB')]
+            for i, adv in adverbs:
+                verbs = [w[0] for w in tags[i-2:i+3] if w[1].startswith('V')]
+                if len(verbs) > 0:
+                    verb = verbs[-1]  # ?
+                    adv_i = tokens.index(adv)
+                    verb_i = tokens.index(verb)
+                    start = max(0, min(adv_i, verb_i))
+                    end = max(adv_i, verb_i)
+                    tokens = self._suggest_toks(
+                        tokens, range(start, end+1), thesaurus(verb), True)
+                    sent = ''.join(tokens)
             sents += [sent]
         self.sentences = sents
 
