@@ -12,7 +12,7 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.corpus import wordnet as wn
 import numpy as np
-from py_thesaurus import WordAnalyzer  # Thesaurus
+from py_thesaurus import Thesaurus  # Thesaurus
 
 from cliches import cliches
 import colors
@@ -75,7 +75,7 @@ def print_rows(lis, max_rows=21, cols=3, item_width=18):
 
 def thesaurus(word):
     """Provide a list of synonyms that are not weak words."""
-    return [w for w in WordAnalyzer(word).get_synonym()
+    return [w for w in Thesaurus(word).get_synonym()
             if w not in filler_words
             and w not in weak_adjs
             and w not in weak_nouns
@@ -107,6 +107,7 @@ class Text(object):
     frequent_words - list the most-used words
     visualize_length - provide visual cues for sentence length
     polish - run all checks in order
+    quick_check - run some of the checks
     """
 
     def __init__(self, string, lang='en_US'):

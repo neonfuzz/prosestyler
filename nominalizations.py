@@ -35,6 +35,11 @@ random_nominalizations = [
     'success',
     ]
 
+dont_check_list = [
+    # words I use waaay too much to care about
+    'simulation',
+    ]
+
 
 def denominalize(noun):
     """Return verb forms of noun, if it is a nominalization."""
@@ -51,6 +56,9 @@ def denominalize(noun):
 
     if noun in random_nominalizations:
         should_check = True
+
+    if noun in dont_check_list:
+        should_check = False
 
     if should_check is False:
         return []

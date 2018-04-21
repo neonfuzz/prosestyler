@@ -1,4 +1,5 @@
-
+Before you do anything else:
+    [ ] saaaave the text at each prompt, rather than at the conclusion of the check
 
 Features:
     [ ] provide all suggestions with context
@@ -13,6 +14,8 @@ Features:
         [X] input your own word
         [X] including scientific word list
         [X] add my words to the scientific word list
+        [ ] smart quotes --> unsmart quotes
+        [ ] SPELL CHECK SHOULD BE RUN ON TOKENS, SO CONTRACTIONS AREN'T FUGGED
         [ ] option to ignore for rest of document
         [ ] option to add to dictionary
     [ ] homophone pointer-outer
@@ -22,6 +25,12 @@ Features:
     [ ] passive voice
         [X] basic implementation
         [ ] Catch more complex phrases
+    [ ] weak words: use thesaurus on base word, not actual
+        e.g. "used" doesn't work well or "be" should show syns for "is"
+        AND/OR: can the thesaurus filter by part of speach?
+                e.g. "show" is a pain in the butt
+                maybe worth using the lemma-thingy instead of the internet one
+    [ ] weak words: ignore "have" when used in the perfect tense
     [ ] sentence tense
     [ ] pronouns
     [ ] frequent words (lemmas)
@@ -41,6 +50,7 @@ Features:
         [ ] SAVE after each sentence (esp. for re-write things)
             [ ] __init__ will need a save file name.
             [ ] implement
+        [ ] ASK users which tests they want to run at start
     [ ] read in from LaTeX
         [X] detex + a little manual interference
         [X] +diff
@@ -52,21 +62,36 @@ Cleanup:
     [ ] Text class / related scripts should be different from "run" script
     [ ] nominalizations can be generalized more to not use tokens.index(noun)
     [ ] adverbs should find closest verb, not just last one.
+    [ ] colors doesn't need 'colorprint' any more.
+    [ ] rename colors.py to color.py
 
 
 Bugs:
+    [ ] if you custom-edit a sentence and leave it blank, the program crashes
+    [ ] filler words BORKS up if you edit the whole sentence early on
+    [ ] grammar check re-asks questions if you later change something in the sentence
+    [ ] spelling check should treat possessive "'s" like the base word
     [ ] visualize_length should ignore '\n\n' sentences
-    [ ] _replace_phrase only highlights first instance of phrase
     [ ] multiple passive voice / sentence don't get updated in print
     [ ] negatives e.g. "was not included" don't get caught
           also adverbs e.g. "were randomly substituted"
-          also e.g. "was then equilibrated"
-    [ ] weak_words catches "motif"
     [ ] adverbs catches things that are not adverbs
+          especially with 'not' as part of the phrase
+          adverbs shouldn't catch 'al' from 'et. al.'
+    [ ] adverbs crashes if you manually modify the context but it's still working on that sentence
+    [ ] weak_words catches "motif"
+    [ ] weak_words suggests "greater" "larger" "higher" 'round and 'round
+    [ ] weak_words highlights the first instance found, not the one we're correcting
+    [ ] weak_words should check for part of speech and compare only against the appropriate list, esp. with verbs
     [ ] if suggest receives ## input that is not an option, it should
           have a cleaner resolution than throwing an error
     [ ] most text should use the regular English sentence tokenizer;
         figure out how to train on scientific stuffs
+        or just save trained model from science and load that every time.
+
+Long term features:
+    [ ] Ability to ignore certain words in certain tests.
+    [ ] Don't include "has," "do," and "is" if they are part of tense conjugation (weak_words)
 
 
 Implemented:
@@ -87,6 +112,7 @@ Implemented:
             [X] better implementation
     [X] generalize code that needs generalizing
     [X] proper documentation on everything
+
 Implemented (cleanup):
     [X] Color.print should have a less vague name
     [X] Color object should really just be a module (after rename occurs)

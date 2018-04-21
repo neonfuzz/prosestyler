@@ -60,6 +60,7 @@ weak_adjs = [
     'tired',
     'truly',
     'young',
+    'worst',
     ]
 
 
@@ -130,6 +131,7 @@ weak_verbs = [
     'say',
     'see',
     'show',
+    'start',
     'take',
     'talk',
     'tell',
@@ -141,5 +143,4 @@ weak_verbs = [
     'walk',
     'want',
     'wonder',
-    'worst',
     ]

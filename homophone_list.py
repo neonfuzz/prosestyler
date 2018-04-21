@@ -15,6 +15,7 @@ homophone_list = [
     ['but', 'butt'],
     ['buy', 'by'],
     ['capital', 'capitol'],
+    ['coarse', 'course'],
     ['complement', 'compliment'],
     ['creak', 'creek'],
     ['data', 'datum'],

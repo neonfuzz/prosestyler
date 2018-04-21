@@ -1,0 +1,8 @@
+
+To ignore default environments like citations, includegraphics, equations, etc.,
+you must include \begin{document} and \end{document} tags surrounding text.
+
+is there a way to add all authors' last names to the scientific word list file?
+(using the bib file)
+
+when comparing, use the tool 'wdiff'
