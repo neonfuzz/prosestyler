@@ -282,20 +282,25 @@ class Text(object):
         sents = self.sentences
         for k, sent in enumerate(sents):
             tokens = self._gen_tokens(sent)
-            words = self._gen_words(tokens=tokens)
-            tags = self._gen_tags(words=words)
-            vbns = [w[0] for w in tags if w[1] == 'VBN']
-            if len(vbns) > 0:
-                for vbn in vbns:
-                    i = words.index(vbn)
-                    if tags[i-1][1].startswith('V'):
-                        j = tokens.index(vbn)
-                        tokens = self._suggest_toks(
-                            tokens, range(j-2, j+1), [], True)
-                        words = self._gen_words(tokens=tokens)
-                        tags = self._gen_tags(words=words)
-                        sent = ''.join(tokens)
-            sents[k] = sent
+            tags = self._gen_tags(sent=sent)
+            verbs = [(x[0], x[1]) for x in tags if x[1].startswith('V')]
+            verbs_lemma = [
+                (self._lemmatizer.lemmatize(v[0], wn.VERB), v[1])
+                for v in verbs]
+            if 'be' in [x[0] for x in verbs_lemma]:
+                be_verb_indices = [
+                    i for i, x in enumerate(verbs_lemma) if x[0] == 'be']
+                be_verbs = [verbs[i][0] for i in be_verb_indices]
+                passive_verbs = [v[0] for v in verbs
+                                 if v[1] == 'VBN'
+                                 and v[0] not in be_verbs]
+                i = [tokens.index(b) for b in be_verbs]
+                j = [tokens.index(p) for p in passive_verbs]
+                toks = i + j
+                toks.sort()
+                if len(j) > 0:
+                    tokens = self._suggest_toks(tokens, toks, [], True)
+            sents[k] = ''.join(tokens)
             self.sentences = sents
             self.save()
 
