@@ -87,11 +87,12 @@ class Text(object):
     A fancy text object which can provide style suggestions.
 
     Instance variables:
-    string - a string of the entire text
+    save_file - the file to be saved as the checks are performed
     sentences - a list of sententces within the text
+    string - a string of the entire text
+    tags - a list of words and their parts of speech tags
     tokens - a list of tokens
     words - a list of words
-    tags - a list of words and their parts of speech tags
 
     Methods:
     save - save the text to a file
@@ -110,33 +111,39 @@ class Text(object):
     quick_check - run some of the checks
     """
 
-    def __init__(self, string, lang='en_US'):
+    def __init__(self, string, save_file, lang='en_US'):
         """
         Initialize a Text object.
 
         Arguments:
         string - the text string to be parsed
+        save_file - the output file to be used between each step
 
         Optional arguments:
         lang - the language to be used (not fully implemented)
         """
 
         # Define dictionaries etc.
-        # Train Punkt tokenizer on text (for better sentence breaks)
+        # Train Punkt tokenizer on text (for better sentence breaks).
         self._tokenizer = nltk.tokenize.PunktSentenceTokenizer(string)
         self._dict = enchant.DictWithPWL(lang, 'scientific_word_list.txt')
         self._gram = language_check.LanguageTool(lang)
         self._gram.disable_spellchecking()
         self._lemmatizer = nltk.stem.WordNetLemmatizer()
 
-        # Make all the things
+        # Make all the things.
         self._string = string.replace('“', '"').replace('”', '"')
+        self._string = string.replace('‘', "'").replace('’', "'")
         self._sentences = self._gen_sent(self._string)
         self._clean()  # Also makes tokens, words, tags.
 
-    def save(self, filename):
+        # Save for the very first time.
+        self.save_file = save_file
+        self.save()
+
+    def save(self):
         """Save the object to file."""
-        with open(filename, 'w') as myfile:
+        with open(self.save_file, 'w') as myfile:
             myfile.write(self._string)
 
     def _suggest_toks(self, tokens, indices, suggestions,
@@ -192,22 +199,23 @@ class Text(object):
     def spelling(self):
         """Run a spell check on the text!"""
         # Courtesy of http://www.jpetrie.net/scientific-word-list-for-spell-checkersspelling-dictionaries/
-        sents = []
-        for sent in self._sentences:
+        sents = self.sentences
+        for i, sent in enumerate(sents):
             tokens = self._gen_tokens(sent)
-            for i, tok in enumerate(tokens):
+            for j, tok in enumerate(tokens):
                 if tok == ' ' or tok == '\n' or tok in punctuation:
                     continue
                 if self._dict.check(tok) is False:
                     tokens = self._suggest_toks(
-                        tokens, [i], self._dict.suggest(tok))
-            sents += [''.join(tokens)]
-        self.sentences = sents
+                        tokens, [j], self._dict.suggest(tok))
+            sents[i] = ''.join(tokens)
+            self.sentences = sents
+            self.save()
 
     def grammar(self):
         """Run a grammar check on the text!"""
-        sents = []
-        for sent in self._sentences:
+        sents = self.sentences
+        for i, sent in enumerate(sents):
             errors = self._gram.check(sent)
             # Don't check for smart quotes
             errors = [err for err in errors if err.ruleId != 'EN_QUOTES']
@@ -216,23 +224,24 @@ class Text(object):
                 if err.fromx < 0 or err.tox < 0:
                     errors = errors[1:]
                     continue
-                tokens = [
+                pseudo_tokens = [
                     sent[:err.fromx], sent[err.fromx:err.tox], sent[err.tox:]]
-                tokens = self._suggest_toks(
-                    tokens, [1], err.replacements, True)
-                sent_new = ''.join(tokens)
+                pseudo_tokens = self._suggest_toks(
+                    pseudo_tokens, [1], err.replacements, True)
+                sent_new = ''.join(pseudo_tokens)
                 if sent_new == sent:
                     errors = errors[1:]
                 else:
                     errors = self._gram.check(sent_new)
                 sent = sent_new
-            sents += [sent]
-        self.sentences = sents
+            sents[i] = sent
+            self.sentences = sents
+            self.save()
 
     def homophone_check(self):
         """Point out every single homophone, for good measure."""
-        sents = []
-        for sent in self._sentences:
+        sents = self._sentences
+        for j, sent in enumerate(sents):
             tokens = self._gen_tokens(sent)
             for i, tok in enumerate(tokens):
                 for homophones in homophone_list:
@@ -240,13 +249,14 @@ class Text(object):
                         if h == tok.lower():
                             tokens = self._suggest_toks(
                                 tokens, [i], homophones)
-            sents += [''.join(tokens)]
-        self.sentences = sents
+            sents[j] = ''.join(tokens)
+            self.sentences = sents
+            self.save()
 
     def cliches(self):
         """Highlight cliches and offer suggestions."""
-        sents = []
-        for sent in self._sentences:
+        sents = self.sentences
+        for i, sent in enumerate(sents):
             tokens = self._gen_tokens(sent)
             lem = ''.join([
                 self._lemmatizer.lemmatize(t) for t in tokens]).lower()
@@ -261,14 +271,16 @@ class Text(object):
                     tokens = self._suggest_toks(
                         tokens, [1], cliches[k])
                     sent = ''.join(tokens)
-            sents += [sent]
-        self.sentences = sents
+            sents[i] = sent
+            self.sentences = sents
+            self.save()
         self._clean()
+        self.save()
 
     def passive_voice(self):
         """Point out (many) instances of passive voice."""
-        sents = []
-        for sent in self._sentences:
+        sents = self.sentences
+        for k, sent in enumerate(sents):
             tokens = self._gen_tokens(sent)
             words = self._gen_words(tokens=tokens)
             tags = self._gen_tags(words=words)
@@ -283,13 +295,14 @@ class Text(object):
                         words = self._gen_words(tokens=tokens)
                         tags = self._gen_tags(words=words)
                         sent = ''.join(tokens)
-            sents += [sent]
-        self.sentences = sents
+            sents[k] = sent
+            self.sentences = sents
+            self.save()
 
     def nominalizations(self):
         """Find many nominalizations and suggest stronger verbs."""
-        sents = []
-        for sent in self._sentences:
+        sents = self.sentences
+        for i, sent in enumerate(sents):
             tokens = self._gen_tokens(sent)
             nouns = [w[0] for w in self._gen_tags(sent=sent)
                      if w[1].startswith('NN')]
@@ -298,13 +311,14 @@ class Text(object):
                 if len(denoms) > 0 and noun in tokens:
                     tokens = self._suggest_toks(
                         tokens, [tokens.index(noun)], denoms, True)
-            sents += [''.join(tokens)]
-        self.sentences = sents
+            sents[i] = ''.join(tokens)
+            self.sentences = sents
+            self.save()
 
     def weak_words(self):
         """Find weak words and suggest stronger ones."""
-        sents = []
-        for sent in self._sentences:
+        sents = self.sentences
+        for i, sent in enumerate(sents):
             tokens = self._gen_tokens(sent)
             tags = self._gen_tags(sent=sent)
             for w in tags:
@@ -318,25 +332,28 @@ class Text(object):
                         tokens = self._suggest_toks(
                             tokens, [tokens.index(w[0])],
                             thesaurus(w[0]), True)
-            sents += [''.join(tokens)]
-        self.sentences = sents
+            sents[i] = ''.join(tokens)
+            self.sentences = sents
+            self.save()
 
     def filler_words(self):
         """Point out filler words and offer to delete them."""
-        sents = []
-        for sent in self._sentences:
+        sents = self.sentences
+        for j, sent in enumerate(sents):
             tokens = self._gen_tokens(sent)
             for i, tok in enumerate(tokens):
                 if tok.lower() in filler_words:
                     tokens = self._suggest_toks(tokens, [i], [], True)
-            sents += [''.join(tokens)]
-        self.sentences = sents
+            sents[j] = ''.join(tokens)
+            self.sentences = sents
+            self.save()
         self._clean()
+        self.save()
 
     def adverbs(self):
         """Find adverbs and verbs, offer better verbs."""
-        sents = []
-        for sent in self._sentences:
+        sents = self.sentences
+        for j, sent in enumerate(sents):
             tokens = self._gen_tokens(sent)
             tags = self._gen_tags(sent=sent)
             adverbs = [(i, w[0]) for i, w in enumerate(tags)
@@ -352,8 +369,9 @@ class Text(object):
                     tokens = self._suggest_toks(
                         tokens, range(start, end+1), thesaurus(verb), True)
                     sent = ''.join(tokens)
-            sents += [sent]
-        self.sentences = sents
+            sents[j] = sent
+            self.sentences = sents
+            self.save()
 
     def _ask_user(self, word, freq, close):
         """Ask user if they want to view words in close proximity."""
@@ -595,7 +613,7 @@ def main():
     global text  # NOTE: for debugging
     args = PARSER.parse_args()
     with open(args.file) as myfile:
-        text = Text(''.join(myfile.readlines()))
+        text = Text(''.join(myfile.readlines()), args.o)
 
     # Check that stuff
     text.polish()
