@@ -12,7 +12,9 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.corpus import wordnet as wn
 import numpy as np
-from py_thesaurus import Thesaurus  # Thesaurus
+from pattern.en import conjugate
+# from py_thesaurus import Thesaurus  # Thesaurus
+from thesaurus import Thesaurus
 
 from cliches import cliches
 import colors
@@ -71,15 +73,6 @@ def print_rows(lis, max_rows=21, cols=3, item_width=18):
         r = (r+1) % nrows
     for row in rows:
         print(mystr.format(*row))
-
-
-def thesaurus(word):
-    """Provide a list of synonyms that are not weak words."""
-    return [w for w in Thesaurus(word).get_synonym()
-            if w not in filler_words
-            and w not in weak_adjs
-            and w not in weak_nouns
-            and w not in weak_verbs]
 
 
 class Text(object):
@@ -195,6 +188,22 @@ class Text(object):
                 ans = user_input
                 tokens = tokens[:indices[0]] + [ans] + tokens[indices[-1]+1:]
         return tokens
+
+    def _thesaurus(self, word, pos):
+        """Provide a list of synonyms for word."""
+        lemma = self._lemmatizer.lemmatize(word, self._penn2morphy(pos))
+        gen_pos = self._penn2gen(pos)
+        syns = []
+        for i in range(5):
+            syns = Thesaurus(lemma).synonyms[gen_pos]
+            if len(syns) > 0:
+                break
+        if gen_pos == 'verb':
+            for i, syn in enumerate(syns):
+                syn = syn.split(' ')
+                syn = ' '.join([conjugate(syn[0], pos)] + syn[1:])
+                syns[i] = syn
+        return syns
 
     def spelling(self):
         """Run a spell check on the text!"""
@@ -336,7 +345,7 @@ class Text(object):
                             and w[0] in tokens:
                         tokens = self._suggest_toks(
                             tokens, [tokens.index(w[0])],
-                            thesaurus(w[0]), True)
+                            self._thesaurus(w[0], w[1]), True)
             sents[i] = ''.join(tokens)
             self.sentences = sents
             self.save()
@@ -372,7 +381,8 @@ class Text(object):
                     start = max(0, min(adv_i, verb_i))
                     end = max(adv_i, verb_i)
                     tokens = self._suggest_toks(
-                        tokens, range(start, end+1), thesaurus(verb), True)
+                        tokens, range(start, end+1), self._thesaurus(verb, 'VB'),
+                        True)
                     sent = ''.join(tokens)
             sents[j] = sent
             self.sentences = sents
@@ -565,6 +575,17 @@ class Text(object):
                       'RB': wn.ADV}
         try:
             return morphy_tag[penntag[:2]]
+        except KeyError:
+            return None
+
+    def _penn2gen(self, penntag):
+        """Quick 'translation' between Penn and generic POS tags."""
+        gen_tag = {'NN': 'noun',
+                   'JJ': 'adj',
+                   'VB': 'verb',
+                   'RB': 'adv'}
+        try:
+            return gen_tag[penntag[:2]]
         except KeyError:
             return None
 
