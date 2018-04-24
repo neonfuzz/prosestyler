@@ -381,7 +381,9 @@ class Text(object):
                     start = max(0, min(adv_i, verb_i))
                     end = max(adv_i, verb_i)
                     tokens = self._suggest_toks(
-                        tokens, range(start, end+1), self._thesaurus(verb, 'VB'),
+                        tokens,
+                        range(start, end+1),
+                        self._thesaurus(verb, 'VB'),
                         True)
                     sent = ''.join(tokens)
             sents[j] = sent
@@ -647,7 +649,7 @@ def main():
     # Final result
     print('\n\n%s' % text.string)
 
-    text.save(args.o)
+    text.save()
 
 if __name__ == '__main__':
     main()

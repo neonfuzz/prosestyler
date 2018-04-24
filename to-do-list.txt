@@ -1,6 +1,3 @@
-Before you do anything else:
-    [ ] saaaave the text at each prompt, rather than at the conclusion of the check
-
 Features:
     [ ] provide all suggestions with context
         [X] surrounding sentence
@@ -14,24 +11,16 @@ Features:
         [X] input your own word
         [X] including scientific word list
         [X] add my words to the scientific word list
-        [ ] smart quotes --> unsmart quotes
-        [ ] SPELL CHECK SHOULD BE RUN ON TOKENS, SO CONTRACTIONS AREN'T FUGGED
+        [X] smart quotes --> unsmart quotes
         [ ] option to ignore for rest of document
         [ ] option to add to dictionary
     [ ] homophone pointer-outer
         [X] basic checker
         [X] catch "it's"
         [ ] provides example for each homophone
-    [ ] passive voice
-        [X] basic implementation
-        [ ] Catch more complex phrases
-    [ ] weak words: use thesaurus on base word, not actual
-        e.g. "used" doesn't work well or "be" should show syns for "is"
-        AND/OR: can the thesaurus filter by part of speach?
-                e.g. "show" is a pain in the butt
-                maybe worth using the lemma-thingy instead of the internet one
-    [ ] weak words: ignore "have" when used in the perfect tense
     [ ] sentence tense
+        [ ] consistent throughout sentence
+        [ ] consistent throughout paragraph?
     [ ] pronouns
     [ ] frequent words (lemmas)
         [X] basic implementation
@@ -47,10 +36,11 @@ Features:
         [X] newlines should break sentences
             [X] and stay broken
         [X] 'clean' method to remove "  ", " .", " ," etc.
-        [ ] SAVE after each sentence (esp. for re-write things)
-            [ ] __init__ will need a save file name.
-            [ ] implement
+        [X] SAVE after each sentence (esp. for re-write things)
+            [X] __init__ will need a save file name.
+            [X] implement
         [ ] ASK users which tests they want to run at start
+        [ ] loop through homophones, ask if you want to check each one
     [ ] read in from LaTeX
         [X] detex + a little manual interference
         [X] +diff
@@ -70,28 +60,29 @@ Bugs:
     [ ] if you custom-edit a sentence and leave it blank, the program crashes
     [ ] filler words BORKS up if you edit the whole sentence early on
     [ ] grammar check re-asks questions if you later change something in the sentence
-    [ ] spelling check should treat possessive "'s" like the base word
-    [ ] visualize_length should ignore '\n\n' sentences
-    [ ] multiple passive voice / sentence don't get updated in print
-    [ ] negatives e.g. "was not included" don't get caught
-          also adverbs e.g. "were randomly substituted"
+    [ ] adverbs crashes if you manually modify the context but it's still working on that sentence
+    [ ] weak_words highlights the first instance found, not the one we're correcting
     [ ] adverbs catches things that are not adverbs
           especially with 'not' as part of the phrase
           adverbs shouldn't catch 'al' from 'et. al.'
-    [ ] adverbs crashes if you manually modify the context but it's still working on that sentence
-    [ ] weak_words catches "motif"
-    [ ] weak_words suggests "greater" "larger" "higher" 'round and 'round
-    [ ] weak_words highlights the first instance found, not the one we're correcting
-    [ ] weak_words should check for part of speech and compare only against the appropriate list, esp. with verbs
+          (try googling for 'dependency parser' or similar)
+          (http://nlp.stanford.edu:8080/corenlp/process)
+    [ ] spelling check should treat possessive "'s" like the base word
+    [ ] "students'" (i.e. plural possessive) isn't tokenized correctly.
+    [ ] visualize_length should ignore '\n\n' sentences
     [ ] if suggest receives ## input that is not an option, it should
           have a cleaner resolution than throwing an error
     [ ] most text should use the regular English sentence tokenizer;
         figure out how to train on scientific stuffs
         or just save trained model from science and load that every time.
+    [ ] In passive voice e.g. "possible suggestions for iswritten" needs to have a space inserted
+    [ ] passive voice: make a limit on distance between words
 
 Long term features:
     [ ] Ability to ignore certain words in certain tests.
+    [ ] Add words to spell-check on-the-fly.
     [ ] Don't include "has," "do," and "is" if they are part of tense conjugation (weak_words)
+    [ ] Better interactive edit.
 
 
 Implemented:
@@ -110,8 +101,17 @@ Implemented:
         [X] nominalizations
         [X] adverbs
             [X] better implementation
+    [X] passive voice
+        [X] basic implementation
+        [X] Catch more complex phrases
+        [X] ignore perfect tenses
     [X] generalize code that needs generalizing
-    [X] proper documentation on everything
+    [X] proper docu:entation on everything
+    [X] weak words
+        [X] use thesaurus on base word, not actual
+            e.g. "used" doesn't work well or "be" should show syns for "is"
+        [X] filter by part of speech
+        [X] conjugate verbs to match suggestion
 
 Implemented (cleanup):
     [X] Color.print should have a less vague name
@@ -121,3 +121,6 @@ Implemented (cleanup):
         (replaced with _suggest_toks)
     [X] all methods which use _replace_phrase should get updated
         to _suggest_toks
+
+Implemented (bug fixes):
+    [X] weak_words suggests "greater" "larger" "higher" 'round and 'round

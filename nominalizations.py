@@ -22,15 +22,6 @@ nominalization_endings = [
 
 random_nominalizations = [
     'belief',
-#     'capture',
-#     'closure',
-#     'departure',
-#     'disclosure',
-#     'exposure',
-#     'failure',
-#     'forfeiture',
-#     'pleasure',
-#     'pressure',
     'sale',
     'success',
     ]
