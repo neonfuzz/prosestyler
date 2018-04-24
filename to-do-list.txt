@@ -51,7 +51,6 @@ Features:
 Cleanup:
     [ ] Text class / related scripts should be different from "run" script
     [ ] nominalizations can be generalized more to not use tokens.index(noun)
-    [ ] adverbs should find closest verb, not just last one.
     [ ] colors doesn't need 'colorprint' any more.
     [ ] rename colors.py to color.py
 
@@ -62,11 +61,6 @@ Bugs:
     [ ] grammar check re-asks questions if you later change something in the sentence
     [ ] adverbs crashes if you manually modify the context but it's still working on that sentence
     [ ] weak_words highlights the first instance found, not the one we're correcting
-    [ ] adverbs catches things that are not adverbs
-          especially with 'not' as part of the phrase
-          adverbs shouldn't catch 'al' from 'et. al.'
-          (try googling for 'dependency parser' or similar)
-          (http://nlp.stanford.edu:8080/corenlp/process)
     [ ] spelling check should treat possessive "'s" like the base word
     [ ] "students'" (i.e. plural possessive) isn't tokenized correctly.
     [ ] visualize_length should ignore '\n\n' sentences
@@ -75,7 +69,7 @@ Bugs:
     [ ] most text should use the regular English sentence tokenizer;
         figure out how to train on scientific stuffs
         or just save trained model from science and load that every time.
-    [ ] In passive voice e.g. "possible suggestions for iswritten" needs to have a space inserted
+    [ ] In passive voice e.g. "possible suggestions for iswritten" needs to have a space inserted (same w/ adverbs)
     [ ] passive voice: make a limit on distance between words
 
 Long term features:
@@ -83,6 +77,8 @@ Long term features:
     [ ] Add words to spell-check on-the-fly.
     [ ] Don't include "has," "do," and "is" if they are part of tense conjugation (weak_words)
     [ ] Better interactive edit.
+    [ ] Figure out how to package for others
+        [ ] esp. Stanford dependency parser libraries
 
 
 Implemented:
@@ -124,3 +120,6 @@ Implemented (cleanup):
 
 Implemented (bug fixes):
     [X] weak_words suggests "greater" "larger" "higher" 'round and 'round
+    [X] adverbs catches things that are not adverbs
+          especially with 'not' as part of the phrase
+          adverbs shouldn't catch 'al' from 'et. al.'

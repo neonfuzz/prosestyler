@@ -2,6 +2,7 @@
 
 
 from math import ceil
+import os
 from string import punctuation
 
 import argparse
@@ -11,6 +12,7 @@ import lxml  # Needed for thesaurus
 import nltk
 from nltk.corpus import stopwords
 from nltk.corpus import wordnet as wn
+from nltk.parse.stanford import StanfordDependencyParser
 import numpy as np
 from pattern.en import conjugate
 # from py_thesaurus import Thesaurus  # Thesaurus
@@ -32,6 +34,16 @@ PARSER.add_argument(
 PARSER.add_argument(
     '-d', default='en_US', type=str, metavar='dictionary',
     help='Which dictionary to use (default: en_US)')
+
+
+os.environ['STANFORD_PARSER'] = '/home/addie/opt/stanford/stanford-parser-' \
+                                'full-2018-02-27/stanford-parser.jar'
+os.environ['STANFORD_MODELS'] = '/home/addie/opt/stanford/stanford-parser-' \
+                                'full-2018-02-27/stanford-parser-3.9.1-' \
+                                'models.jar'
+
+dep_parser = StanfordDependencyParser(
+    model_path="edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz")
 
 
 def now_checking_banner(word):
@@ -370,25 +382,32 @@ class Text(object):
         for j, sent in enumerate(sents):
             tokens = self._gen_tokens(sent)
             tags = self._gen_tags(sent=sent)
-            adverbs = [(i, w[0]) for i, w in enumerate(tags)
-                        if w[1].startswith('RB')]
-            for i, adv in adverbs:
-                verbs = [w[0] for w in tags[i-2:i+3] if w[1].startswith('V')]
-                if len(verbs) > 0:
-                    verb = verbs[-1]  # ?
-                    adv_i = tokens.index(adv)
-                    verb_i = tokens.index(verb)
-                    start = max(0, min(adv_i, verb_i))
-                    end = max(adv_i, verb_i)
-                    tokens = self._suggest_toks(
-                        tokens,
-                        range(start, end+1),
-                        self._thesaurus(verb, 'VB'),
-                        True)
-                    sent = ''.join(tokens)
-            sents[j] = sent
-            self.sentences = sents
-            self.save()
+
+            adverbs = [x[0] for x in tags
+                       if x[1].startswith('RB')
+                       and x[0].endswith('ly')]
+
+            if len(adverbs) > 0:
+                parse = list(dep_parser.parse(tokens))[0]
+                nodes = parse.nodes
+                adv_words = [n for n in nodes.values()
+                             if 'advmod' in n['deps'].keys()]
+
+                for word in adv_words:
+                    adverb_ids = word['deps']['advmod']
+                    adverbs = [nodes[i]['word'] for i in adverb_ids
+                               if nodes[i]['word'].endswith('ly')]
+                    if len(adverbs) > 0:
+                        indices = [tokens.index(adv) for adv in adverbs]
+                        indices += [tokens.index(word['word'])]
+                        indices.sort()
+                        tokens = self._suggest_toks(
+                            tokens, indices,
+                            self._thesaurus(word['word'], word['tag']),
+                            True)
+                        sent = ''.join(tokens)
+                        self.sentences = sents
+                        self.save()
 
     def _ask_user(self, word, freq, close):
         """Ask user if they want to view words in close proximity."""
