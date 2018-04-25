@@ -18,10 +18,17 @@ Features:
         [X] basic checker
         [X] catch "it's"
         [ ] provides example for each homophone
+    [ ] weak words
+        [ ] plural nouns from thesaurus
+        [ ] weak modals (?)
     [ ] sentence tense
         [ ] consistent throughout sentence
         [ ] consistent throughout paragraph?
     [ ] pronouns
+            anyone/someone/everyone, her/his, i/me, it, they, this, what, we/our, who(m), you
+    [ ] prepositions
+            (will need to transfer some from weak_words)
+    [ ] numbers (inc. e.g. several)
     [ ] frequent words (lemmas)
         [X] basic implementation
         [X] distance between frequent words

@@ -1,4 +1,5 @@
 
+
 cliches = {
     # Lemmatized
     '11th hour': [],
@@ -21,6 +22,10 @@ cliches = {
     'all talk and no action': [],
     'all that glitter is not gold': [],
     'all that jazz': [],
+    'all the help he can get': [],
+    'all the help i can get': [],
+    'all the help she can get': [],
+    'all the help they can get': [],
     'always look on the bright side': [],
     'an arm and a leg': [],
     'an eternity': [],
@@ -30,6 +35,7 @@ cliches = {
     'at the end of my rope': [],
     'at the end of the day': [],
     'at the last minute': [],
+    'at this time': [],
     'at wit\' end': [],
     'baby boomer': [],
     'back against the wall': [],
@@ -137,6 +143,8 @@ cliches = {
     'emotional roller coaster': [],
     'end justifes the mean': [],
     'end justify the mean': [],
+    'every detail': [],
+    'every little detail': [],
     'every single': ['each'],
     'fair weather friend': [],
     'fall through the crack': [],
@@ -314,6 +322,7 @@ cliches = {
     'on the same page': [],
     'on track': [],
     'on your toe': [],
+    'once again': [],
     'one in million': [],
     'one night stand': [],
     'open book': [],
@@ -409,6 +418,7 @@ cliches = {
     'time after time': [],
     'time and again': [],
     'time is money': [],
+    'time of day': ['time'],
     'time of your life': [],
     'time will tell': [],
     'tip of the iceberg': [],
@@ -445,4 +455,5 @@ cliches = {
     'with reference to': ['regarding', 'about'],
     'with regard to': ['regarding', 'about'],
     'worked up': [],
+    'you can imagine': [],
     }
