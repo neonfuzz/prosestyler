@@ -17,7 +17,6 @@ cliches = {
     'airing dirty laundry': [],
     'all in a day\'s work': [],
     'all in due time': [],
-    'all of the': ['all the'],
     'all over the map': [],
     'all talk and no action': [],
     'all that glitter is not gold': [],

@@ -12,6 +12,7 @@ Features:
         [X] including scientific word list
         [X] add my words to the scientific word list
         [X] smart quotes --> unsmart quotes
+        [ ] ignore big long spaces
         [ ] option to ignore for rest of document
         [ ] option to add to dictionary
     [ ] homophone pointer-outer
@@ -27,7 +28,7 @@ Features:
     [ ] pronouns
             anyone/someone/everyone, her/his, i/me, it, they, this, what, we/our, who(m), you
     [ ] prepositions
-            (will need to transfer some from weak_words)
+            (will need to transfer some from filler_words)
     [ ] numbers (inc. e.g. several)
     [ ] frequent words (lemmas)
         [X] basic implementation
@@ -46,8 +47,10 @@ Features:
         [X] SAVE after each sentence (esp. for re-write things)
             [X] __init__ will need a save file name.
             [X] implement
+        [ ] Create and implement default save file name
         [ ] ASK users which tests they want to run at start
         [ ] loop through homophones, ask if you want to check each one
+        [ ] save old version of text, offer wdiff (look @ simplediff)
     [ ] read in from LaTeX
         [X] detex + a little manual interference
         [X] +diff
@@ -63,26 +66,25 @@ Cleanup:
 
 
 Bugs:
-    [ ] if you custom-edit a sentence and leave it blank, the program crashes
-    [ ] filler words BORKS up if you edit the whole sentence early on
-    [ ] grammar check re-asks questions if you later change something in the sentence
-    [ ] adverbs crashes if you manually modify the context but it's still working on that sentence
-    [ ] weak_words highlights the first instance found, not the one we're correcting
-    [ ] spelling check should treat possessive "'s" like the base word
-    [ ] "students'" (i.e. plural possessive) isn't tokenized correctly.
-    [ ] visualize_length should ignore '\n\n' sentences
+    [ ] passive, noms, weak, adv all still use tokens.index()
+        (basically anything that relies on tags)
+        [ ] highlights the first instance found, not the one we're correcting
     [ ] if suggest receives ## input that is not an option, it should
           have a cleaner resolution than throwing an error
     [ ] most text should use the regular English sentence tokenizer;
         figure out how to train on scientific stuffs
         or just save trained model from science and load that every time.
-    [ ] In passive voice e.g. "possible suggestions for iswritten" needs to have a space inserted (same w/ adverbs)
-    [ ] passive voice: make a limit on distance between words
+    [ ] In passive voice, adverbs e.g. "possible suggestions for iswritten" needs to have a space inserted (same w/ adverbs)
+    [ ] passive voice, adverbs: make a limit on distance between words
+    [ ] nominalizations catches "ions" as a word
 
 Long term features:
     [ ] Ability to ignore certain words in certain tests.
+        [ ] "science" version of nominalizations
     [ ] Add words to spell-check on-the-fly.
     [ ] Don't include "has," "do," and "is" if they are part of tense conjugation (weak_words)
+    [ ] "progress bar"
+    [ ] give option to access more thesaurus
     [ ] Better interactive edit.
     [ ] Figure out how to package for others
         [ ] esp. Stanford dependency parser libraries
@@ -130,3 +132,13 @@ Implemented (bug fixes):
     [X] adverbs catches things that are not adverbs
           especially with 'not' as part of the phrase
           adverbs shouldn't catch 'al' from 'et. al.'
+    [X] spelling check should treat possessive "'s" like the base word
+    [X] "students'" (i.e. plural possessive) isn't tokenized correctly.
+    [X] "instructions" should be caught by nominalizations
+    [X] visualize_length should ignore '\n\n' sentences
+    [X] if you custom-edit a sentence and leave it blank, the program crashes
+    [X] filler words BORKS up if you edit the whole sentence early on
+    [X] grammar check re-asks questions if you later change something in the sentence
+    [X] adverbs crashes if you manually modify the context but it's still working on that sentence
+    [X] thesaurus stopped working? can't ping thesaurus.com
+    [X] cliches: "The great fire ball slowly begins to rise in the air and narrow splinters of light pierce the leafy walls of the hut." catches " walls of "??

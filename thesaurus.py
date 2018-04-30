@@ -1,4 +1,6 @@
 
+import json
+import re
 
 from bs4 import BeautifulSoup
 from lxml import html
@@ -19,7 +21,7 @@ class Thesaurus(object):
                    part of speech
         n_defs - the number of definitions for the word
     """
-    def __init__(self, word):
+    def __init__(self, word, max_syns=70):
         """Initialize the class with 'word'."""
         # Download thesaurus information from thesaurus.com
         self._word = word
@@ -34,30 +36,35 @@ class Thesaurus(object):
             'adj': [],
             'adv': [],
             'as in': [],
-        }
-        # Find parts of speech for each definition.
-        pos_tags = self._soup.select('div.mask a.pos-tab')
-        self._pos = [[z.text for z in x.select('em')][0] for x in pos_tags]
+            }
 
-        # Number of definitons
-        self._n_defs = len(self._pos)
+        # Locate script which has json for all synonyms.
+        scripts = self._soup.find_all('script')
+        pattern = re.compile('window.INITIAL_STATE = {(.*?)};')
+        for script in scripts:
+            match = pattern.match(script.string)
+            if match:
+                json_string = '{%s}' % match.groups()[0]
+                json_dict = json.loads(json_string)
+                break
+
+        # Find tabs for each definiton.
+        self._defs = json_dict['searchData']['tunaApiData']['posTabs']
+
+        # Number of definitions.
+        self._n_defs = len(self._defs)
         if self._n_defs == 0:
             return
 
-        # For each definition, append each synonym to the proper pos.
-        max_syns = 70
+        # For each definition, append some synonyms to the proper pos.
         max_per_list = int(max_syns/self._n_defs)
-        for defn in range(self._n_defs):
-            data = self._soup.select('div#synonyms-%s li a' % defn)
-            pos_word = self._pos[defn]
-            defn_syns = []
-            for d in data:
-                word = d.find('span').string
-                if word not in weak_verbs \
-                   and word not in weak_adjs \
-                   and word not in weak_nouns:
-                    defn_syns += [word]
-            self._syns[pos_word] += defn_syns[:max_per_list]
+        for defn in self._defs:
+            defn_syns = [
+                x['term'] for x in defn['synonyms']
+                if x['term'] not in weak_verbs \
+                and x['term'] not in weak_adjs \
+                and x['term'] not in weak_nouns]
+            self._syns[defn['pos']] += defn_syns[:max_per_list]
 
         # Remove duplicates and sort alphebetically.
         for k, v in self._syns.items():
