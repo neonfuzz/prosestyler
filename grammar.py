@@ -18,6 +18,7 @@ from pattern.en import conjugate
 from cliches import cliches
 import colors
 from filler_words import filler_words
+from gui import visual_edit
 from homophone_list import homophone_list
 from nominalizations import denominalize
 from thesaurus import Thesaurus
@@ -192,7 +193,7 @@ class Text(object):
                 tokens = tokens[:indices[0]] + [ans] + tokens[indices[-1]+1:]
         except ValueError:
             if user_input == 'ss':
-                sent = input('Replace entire sentence: ')
+                sent = visual_edit(''.join(tokens))
                 tokens = self._gen_tokens(sent)
             else:
                 ans = user_input

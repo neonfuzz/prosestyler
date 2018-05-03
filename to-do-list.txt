@@ -85,7 +85,6 @@ Long term features:
     [ ] Don't include "has," "do," and "is" if they are part of tense conjugation (weak_words)
     [ ] "progress bar"
     [ ] give option to access more thesaurus
-    [ ] Better interactive edit.
     [ ] Figure out how to package for others
         [ ] esp. Stanford dependency parser libraries
 
@@ -117,6 +116,7 @@ Implemented:
             e.g. "used" doesn't work well or "be" should show syns for "is"
         [X] filter by part of speech
         [X] conjugate verbs to match suggestion
+    [X] Better interactive edit.
 
 Implemented (cleanup):
     [X] Color.print should have a less vague name
