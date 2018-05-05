@@ -60,15 +60,11 @@ Features:
 
 Cleanup:
     [ ] Text class / related scripts should be different from "run" script
-    [ ] nominalizations can be generalized more to not use tokens.index(noun)
     [ ] colors doesn't need 'colorprint' any more.
     [ ] rename colors.py to color.py
 
 
 Bugs:
-    [ ] passive, noms, weak, adv all still use tokens.index()
-        (basically anything that relies on tags)
-        [ ] highlights the first instance found, not the one we're correcting
     [ ] if suggest receives ## input that is not an option, it should
           have a cleaner resolution than throwing an error
     [ ] most text should use the regular English sentence tokenizer;
@@ -87,6 +83,7 @@ Long term features:
     [ ] give option to access more thesaurus
     [ ] Figure out how to package for others
         [ ] esp. Stanford dependency parser libraries
+    [ ] "Edit everything at once" window (with scrollbar)
 
 
 Implemented:
@@ -142,3 +139,6 @@ Implemented (bug fixes):
     [X] adverbs crashes if you manually modify the context but it's still working on that sentence
     [X] thesaurus stopped working? can't ping thesaurus.com
     [X] cliches: "The great fire ball slowly begins to rise in the air and narrow splinters of light pierce the leafy walls of the hut." catches " walls of "??
+    [X] passive, noms, weak, adv all still use tokens.index()
+        (basically anything that relies on tags)
+        [X] highlights the first instance found, not the one we're correcting

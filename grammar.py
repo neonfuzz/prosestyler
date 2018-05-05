@@ -42,7 +42,7 @@ os.environ['STANFORD_MODELS'] = '/home/addie/opt/stanford/stanford-parser-' \
                                 'models.jar'
 
 dep_parser = StanfordDependencyParser(
-    model_path="edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz")
+    model_path='edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz')
 
 
 def now_checking_banner(word):
@@ -311,20 +311,22 @@ class Text(object):
     def _passive_errors(self, tokens, ignore_list=[]):
         errors = []
         suggests = []
-        words = self._gen_words(tokens=tokens)
-        tags = self._gen_tags(words=words)
-        verbs = [(x[0], x[1]) for x in tags if x[1].startswith('V')]
+        words, inds = self._gen_words(tokens)
+        tags = self._gen_tags(words)
+        verbs = [(x[0], x[1], inds[i])
+                 for i, x in enumerate(tags)
+                 if x[1].startswith('V')]
         verbs_lemmas = [
-            self._lemmatizer.lemmatize(v[0], wn.VERB) for v in verbs]
-        be_verb_ids = [i for i, x in enumerate(verbs_lemmas) if x == 'be']
-        be_verbs = [verbs[i][0] for i in be_verb_ids]
-        passive_verbs = [v[0] for v in verbs
-                         if v[1] == 'VBN'
-                         and v[0] not in be_verbs]
-        i = [tokens.index(b) for b in be_verbs]
-        j = [tokens.index(p) for p in passive_verbs]
-        tup = (be_verbs + passive_verbs, i + j)
-        if len(i) > 0 and len(j) > 0 and tup not in ignore_list:
+            (self._lemmatizer.lemmatize(v[0], wn.VERB), v[1], v[2])
+            for v in verbs]
+        be_verb_ids = [v[2] for v in verbs_lemmas if v[0] == 'be']
+        passive_verb_ids = [
+            v[2] for v in verbs if v[1] == 'VBN' and v[2] not in be_verb_ids]
+        be_verbs = [tokens[i] for i in be_verb_ids]
+        passive_verbs = [tokens[i] for i in passive_verb_ids]
+        tup = (be_verbs + passive_verbs, be_verb_ids + passive_verb_ids)
+        if len(be_verb_ids) > 0 and len(passive_verb_ids) > 0 \
+           and tup not in ignore_list:
             errors = [tup]
             suggests = [['']]
         return errors, suggests, ignore_list
@@ -332,13 +334,17 @@ class Text(object):
     def _nominalization_errors(self, tokens, ignore_list=[]):
         errors = []
         suggests = []
-        words = self._gen_words(tokens=tokens)
-        tags = self._gen_tags(words=words)
-        nouns = [t[0] for t in tags if t[1].startswith('NN')]
-        nouns_lemmas = [self._lemmatizer.lemmatize(n, wn.NOUN) for n in nouns]
+        words, inds = self._gen_words(tokens)
+        tags = self._gen_tags(words)
+        nouns = [(t[0], t[1], inds[i])
+                 for i, t in enumerate(tags)
+                 if t[1].startswith('NN')]
+        nouns_lemmas = [
+            (self._lemmatizer.lemmatize(n[0], wn.NOUN), n[1], n[2])
+            for n in nouns]
         for i, noun in enumerate(nouns_lemmas):
-            denoms = denominalize(noun)
-            tup = ([noun], [tokens.index(nouns[i])])
+            denoms = denominalize(noun[0])
+            tup = ([noun[0]], [noun[2]])
             if len(denoms) > 0 and tup not in ignore_list:
                 errors += [tup]
                 suggests += [denoms]
@@ -347,13 +353,13 @@ class Text(object):
     def _weak_words_errors(self, tokens, ignore_list=[]):
         errors = []
         suggests = []
-        words = self._gen_words(tokens=tokens)
-        tags = self._gen_tags(words=words)
-        for w in tags:
+        words, inds = self._gen_words(tokens)
+        tags = self._gen_tags(words)
+        for i, w in enumerate(tags):
             pos = self._penn2morphy(w[1])
             if pos is not None:
                 lemma = self._lemmatizer.lemmatize(w[0], pos)
-                tup = ([w[0]], [tokens.index(w[0])])
+                tup = ([w[0]], [inds[i]])
                 if (lemma in weak_verbs
                         or lemma in weak_adjs
                         or lemma in weak_nouns
@@ -375,21 +381,24 @@ class Text(object):
     def _adverb_errors(self, tokens, ignore_list=[]):
         errors = []
         suggests = []
-        words = self._gen_words(tokens=tokens)
-        tags = self._gen_tags(words=words)
-        adverbs = [x[0] for x in tags
+        words, inds = self._gen_words(tokens)
+        tags = self._gen_tags(words)
+        adverbs = [x[0] for i, x in enumerate(tags)
                    if x[1].startswith('RB') and x[0].endswith('ly')]
         if len(adverbs) > 0:
-            parse = list(dep_parser.parse(tokens))[0]
+            # Parse takes a really long time,
+            # so we check with the faster "tags" before committing.
+            parse = list(dep_parser.parse(words))[0]
             nodes = parse.nodes
             adv_modified = [n for n in nodes.values()
                             if 'advmod' in n['deps'].keys()]
             for word in adv_modified:
-                adv_ids = word['deps']['advmod']
-                advs = [nodes[i]['word'] for i in adv_ids
+                adv_node_ids = word['deps']['advmod']
+                advs = [(nodes[i]['address']-1, nodes[i]['word'])
+                        for i in adv_node_ids
                         if nodes[i]['word'].endswith('ly')]
-                ids = [tokens.index(adv) for adv in advs]
-                ids += [tokens.index(word['word'])]
+                ids = [inds[adv[0]] for adv in advs]
+                ids += [inds[word['address'] - 1]]
                 ids.sort()  # NOTE: may not need in the future
                 toks = [tokens[i] for i in ids]
                 tup = (toks, ids)
@@ -569,8 +578,8 @@ class Text(object):
         self._string = ' '.join(sents)
         self._sentences = sents
         self._tokens = self._gen_tokens(self._string)
-        self._words = self._gen_words(tokens=self._tokens)
-        self._tags = self._gen_tags(words=self._words)
+        self._words, _ = self._gen_words(self._tokens)
+        self._tags = self._gen_tags(self._words)
 
     def _gen_sent(self, string):
         """Generate a list of sentences."""
@@ -607,22 +616,17 @@ class Text(object):
         tokens = nltk.tokenize.regexp_tokenize(string, '\w+|[^\w\s]|\s')
         return self._fix_contractions(tokens)
 
-    def _gen_words(self, tokens=None, sent=None):
+    def _gen_words(self, tokens):
         """Generate a list of words."""
-        if sent is not None:
-            tokens = self._gen_tokens(sent)
-        if tokens is not None:
-            return [
-                tok for tok in tokens if tok != ' ' and tok not in punctuation]
-        raise NameError('_gen_words must be passed either tokens or sent.')
+        mylist = [(i, tok) for i, tok in enumerate(tokens)
+                  if tok != ' ' and tok not in punctuation]
+        inds = [w[0] for w in mylist]
+        words = [w[1] for w in mylist]
+        return words, inds
 
-    def _gen_tags(self, words=None, sent=None):
+    def _gen_tags(self, words):
         """Generate a list of parts of speech tags."""
-        if words is not None:
-            return nltk.pos_tag(words)
-        if sent is not None:
-            return nltk.pos_tag(self._gen_words(sent=sent))
-        raise NameError('_gen_tags must be passed either words or sent.')
+        return nltk.pos_tag(words)
 
     def _penn2morphy(self, penntag):
         """Quick 'translation' between Penn and Morphy POS tags."""
@@ -655,8 +659,8 @@ class Text(object):
         self._string = string
         self._sentences = self._gen_sent(self._string)
         self._tokens = self._gen_tokens(self._string)
-        self._words = self._gen_words(tokens=self._tokens)
-        self._tags = self._gen_tags(words=self._words)
+        self._words, _ = self._gen_words(self._tokens)
+        self._tags = self._gen_tags(self._words)
 
     @property
     def sentences(self):
@@ -667,8 +671,8 @@ class Text(object):
         self._string = ' '.join(sents)
         self._sentences = sents
         self._tokens = self._gen_tokens(self._string)
-        self._words = self._gen_words(tokens=self._tokens)
-        self._tags = self._gen_tags(words=self._words)
+        self._words, _ = self._gen_words(self._tokens)
+        self._tags = self._gen_tags(self._words)
 
     @property
     def tokens(self):
@@ -679,8 +683,8 @@ class Text(object):
         self._string = ''.join(toks)
         self._sentences = self._gen_sent(self._string)
         self._tokens = toks
-        self._words = self._gen_words(tokens=self._tokens)
-        self._tags = self._gen_tags(words=self._words)
+        self._words, _ = self._gen_words(self._tokens)
+        self._tags = self._gen_tags(self._words)
 
     @property
     def words(self):
