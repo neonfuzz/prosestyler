@@ -42,7 +42,7 @@ def denominalize(noun):
     # Determine if we should check the noun.
     should_check = False
     for ending in nominalization_endings:
-        if noun.endswith(ending):
+        if noun.endswith(ending) and noun != ending:
             should_check = True
 
     if noun in random_nominalizations:

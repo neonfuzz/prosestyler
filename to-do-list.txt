@@ -1,4 +1,11 @@
-Features:
+Short-Term Features:
+    [X] weak words
+        [X] plural nouns from thesaurus
+        [X] weak modals
+    [X] Create and implement default save file name
+
+
+Style Features:
     [ ] provide all suggestions with context
         [X] surrounding sentence
         [X] replace only word shown
@@ -13,22 +20,22 @@ Features:
         [X] add my words to the scientific word list
         [X] smart quotes --> unsmart quotes
         [ ] ignore big long spaces
-        [ ] option to ignore for rest of document
-        [ ] option to add to dictionary
     [ ] homophone pointer-outer
         [X] basic checker
         [X] catch "it's"
         [ ] provides example for each homophone
     [ ] weak words
-        [ ] plural nouns from thesaurus
-        [ ] weak modals (?)
+        [ ] don't include "has," "do," and "is"
+            if they are part of tense conjugation
     [ ] sentence tense
         [ ] consistent throughout sentence
         [ ] consistent throughout paragraph?
     [ ] pronouns
-            anyone/someone/everyone, her/his, i/me, it, they, this, what, we/our, who(m), you
+            anyone/someone/everyone, her/his, i/me, it, they, this, what,
+            we/our, who(m), you
     [ ] prepositions
             (will need to transfer some from filler_words)
+            inc: above, below, beside, under, upon
     [ ] numbers (inc. e.g. several)
     [ ] frequent words (lemmas)
         [X] basic implementation
@@ -40,17 +47,6 @@ Features:
         [X] visualizer
         [ ] function to edit 1+ sentences
         [ ] ask user if they'd like to edit any sentences
-    [ ] user experience
-        [X] newlines should break sentences
-            [X] and stay broken
-        [X] 'clean' method to remove "  ", " .", " ," etc.
-        [X] SAVE after each sentence (esp. for re-write things)
-            [X] __init__ will need a save file name.
-            [X] implement
-        [ ] Create and implement default save file name
-        [ ] ASK users which tests they want to run at start
-        [ ] loop through homophones, ask if you want to check each one
-        [ ] save old version of text, offer wdiff (look @ simplediff)
     [ ] read in from LaTeX
         [X] detex + a little manual interference
         [X] +diff
@@ -58,87 +54,18 @@ Features:
         [ ] write an sh script to facilitate workflow
 
 
-Cleanup:
-    [ ] Text class / related scripts should be different from "run" script
-    [ ] colors doesn't need 'colorprint' any more.
-    [ ] rename colors.py to color.py
-
-
-Bugs:
-    [ ] if suggest receives ## input that is not an option, it should
-          have a cleaner resolution than throwing an error
-    [ ] most text should use the regular English sentence tokenizer;
-        figure out how to train on scientific stuffs
-        or just save trained model from science and load that every time.
-    [ ] In passive voice, adverbs e.g. "possible suggestions for iswritten" needs to have a space inserted (same w/ adverbs)
-    [ ] passive voice, adverbs: make a limit on distance between words
-    [ ] nominalizations catches "ions" as a word
-
-Long term features:
-    [ ] Ability to ignore certain words in certain tests.
-        [ ] "science" version of nominalizations
-    [ ] Add words to spell-check on-the-fly.
-    [ ] Don't include "has," "do," and "is" if they are part of tense conjugation (weak_words)
-    [ ] "progress bar"
-    [ ] give option to access more thesaurus
+GUI Features:
     [ ] Figure out how to package for others
         [ ] esp. Stanford dependency parser libraries
-    [ ] "Edit everything at once" window (with scrollbar)
-
-
-Implemented:
-    [X] grammar check
-        [X] basic check
-        [X] don't highlight entire sentence
-        [X] don't bug about smart quotes
-    [X] synonym suggester (thesaurus)
-        [X] basic implementation
-        [X] don't suggest weak words
-        [X] vague/overused verbs
-        [X] vague/overused adjectives
-        [X] vague/overused nouns
-        [X] filler words
-        [X] cliches / overused phrases / filler phrases
-        [X] nominalizations
-        [X] adverbs
-            [X] better implementation
-    [X] passive voice
-        [X] basic implementation
-        [X] Catch more complex phrases
-        [X] ignore perfect tenses
-    [X] generalize code that needs generalizing
-    [X] proper docu:entation on everything
-    [X] weak words
-        [X] use thesaurus on base word, not actual
-            e.g. "used" doesn't work well or "be" should show syns for "is"
-        [X] filter by part of speech
-        [X] conjugate verbs to match suggestion
-    [X] Better interactive edit.
-
-Implemented (cleanup):
-    [X] Color.print should have a less vague name
-    [X] Color object should really just be a module (after rename occurs)
-    [X] colors.py needs docstrings
-    [X] _replace_one_word should utilize Color.tokenprint
-        (replaced with _suggest_toks)
-    [X] all methods which use _replace_phrase should get updated
-        to _suggest_toks
-
-Implemented (bug fixes):
-    [X] weak_words suggests "greater" "larger" "higher" 'round and 'round
-    [X] adverbs catches things that are not adverbs
-          especially with 'not' as part of the phrase
-          adverbs shouldn't catch 'al' from 'et. al.'
-    [X] spelling check should treat possessive "'s" like the base word
-    [X] "students'" (i.e. plural possessive) isn't tokenized correctly.
-    [X] "instructions" should be caught by nominalizations
-    [X] visualize_length should ignore '\n\n' sentences
-    [X] if you custom-edit a sentence and leave it blank, the program crashes
-    [X] filler words BORKS up if you edit the whole sentence early on
-    [X] grammar check re-asks questions if you later change something in the sentence
-    [X] adverbs crashes if you manually modify the context but it's still working on that sentence
-    [X] thesaurus stopped working? can't ping thesaurus.com
-    [X] cliches: "The great fire ball slowly begins to rise in the air and narrow splinters of light pierce the leafy walls of the hut." catches " walls of "??
-    [X] passive, noms, weak, adv all still use tokens.index()
-        (basically anything that relies on tags)
-        [X] highlights the first instance found, not the one we're correcting
+    [ ] "Edit entire text at once" window (with scrollbar)
+    [ ] In edit window, underline problematic text
+    [ ] Spell check
+        [ ] option to ignore for rest of document
+        [ ] option to add to dictionary
+    [ ] Options for which tests to run
+    [ ] Ability to ignore certain words in certain tests.
+        [ ] "science" version of nominalizations
+    [ ] Give option to access more thesaurus
+    [ ] "Progress bar"
+    [ ] "Go back" button
+    [ ] Save old version of text, offer wdiff (look @ simplediff)

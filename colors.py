@@ -12,17 +12,6 @@ underline = '\033[4m'
 boring = '\033[0m'
 
 
-def colorprint(sent, start=0, end=None, style=None):
-    """Print sentence with underlined section."""
-    if end is None:
-        end = len(sent)
-    if style is None:
-        style = underline
-    print(sent[:start+1]
-          + style + sent[start+1:end+1]
-          + boring + sent[end+1:])
-
-
 def tokenprint(tokens, indices=[], style=None):
     """
     Print sentences from token form with given indices underlined.

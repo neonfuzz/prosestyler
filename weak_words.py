@@ -1,9 +1,5 @@
 
 
-# to-add: above, below, beside, under, upon (prepositions)
-#         would, will, shall, ought (modals)
-
-
 weak_adjs = [
     'able',
     'amazing',
@@ -75,6 +71,19 @@ weak_adjs = [
     'truly',
     'worst',
     'young',
+    ]
+
+
+weak_modals = [
+    'can',
+    'could',
+    'may',
+    'might',
+    'must',
+    'shall',
+    'should',
+    'will',
+    'would',
     ]
 
 

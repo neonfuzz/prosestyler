@@ -1,6 +1,7 @@
 #!/bin/python3
 
 
+from datetime import datetime
 from math import ceil
 import os
 from string import punctuation
@@ -14,6 +15,7 @@ from nltk.corpus import wordnet as wn
 from nltk.parse.stanford import StanfordDependencyParser
 import numpy as np
 from pattern.en import conjugate
+from pattern.en import pluralize 
 
 from cliches import cliches
 import colors
@@ -22,17 +24,22 @@ from gui import visual_edit
 from homophone_list import homophone_list
 from nominalizations import denominalize
 from thesaurus import Thesaurus
-from weak_words import weak_adjs, weak_nouns, weak_verbs
+from weak_words import weak_adjs, weak_modals, weak_nouns, weak_verbs
 
 
 PARSER = argparse.ArgumentParser(description='Perform a deep grammar check.')
 PARSER.add_argument('file', help='The file to be analyzed.')
-PARSER.add_argument(
-    '-o', default='out.txt', type=str, metavar='outfile',
-    help='Name of output file (default out.txt)')
+PARSER.add_argument('-o', type=str, metavar='outfile',
+                    help='Name of output file')
 PARSER.add_argument(
     '-d', default='en_US', type=str, metavar='dictionary',
     help='Which dictionary to use (default: en_US)')
+PARSER.add_argument(
+    '-t', default=False, type=bool, metavar='train_sents',
+    help='Train the sentence tokenizer on the text instead of using '
+         'the default training set; this takes longer but is useful '
+         'for e.g. scientic papers which have a lot of atypical '
+         'punctuation. (default: False)')
 
 
 os.environ['STANFORD_PARSER'] = '/home/addie/opt/stanford/stanford-parser-' \
@@ -115,21 +122,28 @@ class Text(object):
     quick_check - run some of the checks
     """
 
-    def __init__(self, string, save_file, lang='en_US'):
+    def __init__(self, string, save_file=None, lang='en_US',
+                 train_sents=False):
         """
-        Initialize a Text object.
-
         Arguments:
         string - the text string to be parsed
-        save_file - the output file to be used between each step
 
         Optional arguments:
-        lang - the language to be used (not fully implemented)
+        save_file - the output file to be used between each step
+        lang - the language to be used
+            (not fully implemented, default en_US)
+        train_sents - train the sentence tokenizer on the text
+            instead of using the default training set; takes longer,
+            but useful for e.g. scientific papers.
+            (default False)
         """
-
         # Define dictionaries etc.
-        # Train Punkt tokenizer on text (for better sentence breaks).
-        self._tokenizer = nltk.tokenize.PunktSentenceTokenizer(string)
+        if train_sents is True:
+            self._tokenizer = nltk.tokenize.PunktSentenceTokenizer(
+                string).sentences_from_text
+        else:
+            self._tokenizer = nltk.data.load(
+                'tokenizers/punkt/english.pickle').tokenize
         self._dict = enchant.DictWithPWL(lang, 'scientific_word_list.txt')
         self._gram = language_check.LanguageTool(lang)
         self._gram.disable_spellchecking()
@@ -142,6 +156,9 @@ class Text(object):
         self._clean()  # Also makes tokens, words, tags.
 
         # Save for the very first time.
+        if save_file is None:
+            save_file = ''.join(self._words[:3]) + \
+                        ' ' + str(datetime.now()) + '.txt'
         self.save_file = save_file
         self.save()
 
@@ -167,8 +184,9 @@ class Text(object):
 
         # Print the sentence with the desired token underlined.
         print()
-        colors.tokenprint(tokens, indices)
-        phrase = ''.join([tokens[i] for i in indices])
+        inds = range(indices[0], indices[-1]+1)
+        colors.tokenprint(tokens, inds)
+        phrase = ' '.join([tokens[i] for i in indices]).replace('  ', ' ')
         print('Possible suggestions for "%s":' % phrase)
 
         # Print list of suggestions, as well as custom options.
@@ -188,9 +206,14 @@ class Text(object):
         user_input = input('Your choice: ')
         try:
             n = int(user_input)
-            if n > 0:
+            if n > 0 and n <= len(suggestions):
                 ans = suggestions[n-1]
+                # Replace everything between the first and last tokens.
                 tokens = tokens[:indices[0]] + [ans] + tokens[indices[-1]+1:]
+            elif n != 0:
+                print('\n\n-------------\nINVALID VALUE\n-------------')
+                tokens = self._suggest_toks(
+                    tokens, indices, suggestions, can_replace_sent)
         except ValueError:
             if user_input == 'ss':
                 sent = visual_edit(''.join(tokens))
@@ -205,13 +228,17 @@ class Text(object):
         new_pos = self._penn2morphy(pos)
         if new_pos is not None:
             lemma = self._lemmatizer.lemmatize(word, new_pos)
-            lemma = word
             gen_pos = self._penn2gen(pos)
             syns = Thesaurus(lemma).synonyms[gen_pos]
             if gen_pos == 'verb':
                 for i, syn in enumerate(syns):
                     syn = syn.split(' ')
                     syn = ' '.join([conjugate(syn[0], pos)] + syn[1:])
+                    syns[i] = syn
+            if pos == 'NNS':
+                for i, syn in enumerate(syns):
+                    syn = syn.split(' ')
+                    syn = ' '.join([pluralize(syn[0], pos)] + syn[1:])
                     syns[i] = syn
             return syns
         return []
@@ -317,18 +344,26 @@ class Text(object):
                  for i, x in enumerate(tags)
                  if x[1].startswith('V')]
         verbs_lemmas = [
-            (self._lemmatizer.lemmatize(v[0], wn.VERB), v[1], v[2])
-            for v in verbs]
-        be_verb_ids = [v[2] for v in verbs_lemmas if v[0] == 'be']
-        passive_verb_ids = [
-            v[2] for v in verbs if v[1] == 'VBN' and v[2] not in be_verb_ids]
-        be_verbs = [tokens[i] for i in be_verb_ids]
-        passive_verbs = [tokens[i] for i in passive_verb_ids]
-        tup = (be_verbs + passive_verbs, be_verb_ids + passive_verb_ids)
-        if len(be_verb_ids) > 0 and len(passive_verb_ids) > 0 \
-           and tup not in ignore_list:
-            errors = [tup]
-            suggests = [['']]
+            self._lemmatizer.lemmatize(v[0], wn.VERB) for v in verbs]
+        if 'be' in verbs_lemmas and 'VBN' in [v[1] for v in verbs]:
+            # Parse takes a really long time,
+            # so we check with the faster "tags" before committing.
+            parse = list(dep_parser.parse(words))[0]
+            nodes = parse.nodes
+            vbns = [n for n in nodes.values()
+                    if 'auxpass' in n['deps'].keys()]
+            for word in vbns:
+                be_verb_node_ids = word['deps']['auxpass']
+                be_verbs = [(nodes[i]['address']-1, nodes[i]['word'])
+                            for i in be_verb_node_ids]
+                ids = [inds[bv[0]] for bv in be_verbs]
+                ids += [inds[word['address'] - 1]]
+                ids.sort()
+                toks = [tokens[i] for i in ids]
+                tup = (toks, ids)
+                if tup not in ignore_list:
+                    errors += [tup]
+                    suggests += [[]]
         return errors, suggests, ignore_list
 
     def _nominalization_errors(self, tokens, ignore_list=[]):
@@ -359,13 +394,16 @@ class Text(object):
             pos = self._penn2morphy(w[1])
             if pos is not None:
                 lemma = self._lemmatizer.lemmatize(w[0], pos)
-                tup = ([w[0]], [inds[i]])
-                if (lemma in weak_verbs
-                        or lemma in weak_adjs
-                        or lemma in weak_nouns
-                        ) and tup not in ignore_list:
-                    errors += [tup]
-                    suggests += [self._thesaurus(w[0], w[1])]
+            else:
+                lemma = w[0]
+            tup = ([w[0]], [inds[i]])
+            if (lemma in weak_verbs
+                    or lemma in weak_adjs
+                    or lemma in weak_modals
+                    or lemma in weak_nouns
+                    ) and tup not in ignore_list:
+                errors += [tup]
+                suggests += [self._thesaurus(w[0], w[1])]
         return errors, suggests, ignore_list
 
     def _filler_errors(self, tokens, ignore_list=[]):
@@ -383,15 +421,16 @@ class Text(object):
         suggests = []
         words, inds = self._gen_words(tokens)
         tags = self._gen_tags(words)
-        adverbs = [x[0] for i, x in enumerate(tags)
+        adverbs = [x[0] for x in tags
                    if x[1].startswith('RB') and x[0].endswith('ly')]
         if len(adverbs) > 0:
             # Parse takes a really long time,
             # so we check with the faster "tags" before committing.
             parse = list(dep_parser.parse(words))[0]
             nodes = parse.nodes
-            adv_modified = [n for n in nodes.values()
-                            if 'advmod' in n['deps'].keys()]
+            adv_modified = sorted([n for n in nodes.values()
+                                   if 'advmod' in n['deps'].keys()],
+                                  key=lambda k: k['address'])
             for word in adv_modified:
                 adv_node_ids = word['deps']['advmod']
                 advs = [(nodes[i]['address']-1, nodes[i]['word'])
@@ -399,10 +438,13 @@ class Text(object):
                         if nodes[i]['word'].endswith('ly')]
                 ids = [inds[adv[0]] for adv in advs]
                 ids += [inds[word['address'] - 1]]
-                ids.sort()  # NOTE: may not need in the future
+                ids.sort()
                 toks = [tokens[i] for i in ids]
                 tup = (toks, ids)
-                if len(advs) > 0 and tup not in ignore_list:
+                if len(advs) > 0 \
+                   and ids[1] - ids[0] <= 5 \
+                   and word['tag'] is not None \
+                   and tup not in ignore_list:
                     errors += [tup]
                     suggests += [self._thesaurus(word['word'], word['tag'])]
         return errors, suggests, ignore_list
@@ -587,7 +629,7 @@ class Text(object):
         paragraphs = string.split('\n')
         # Sentence tokenize
         paragraphs = [
-            self._tokenizer.sentences_from_text(p) for p in paragraphs]
+            self._tokenizer(p) for p in paragraphs]
         # Add newlines back in
         paragraphs = [p if p != [] else ['\n\n'] for p in paragraphs]
         # Return flattened
@@ -700,7 +742,8 @@ def main():
     global text  # NOTE: for debugging
     args = PARSER.parse_args()
     with open(args.file) as myfile:
-        text = Text(''.join(myfile.readlines()), args.o)
+        text = Text(''.join(myfile.readlines()), save_file=args.o,
+                    lang=args.d, train_sents=args.t)
 
     # Check that stuff
     text.quick_check()
