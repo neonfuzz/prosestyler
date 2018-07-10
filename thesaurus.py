@@ -49,7 +49,10 @@ class Thesaurus(object):
                 break
 
         # Find tabs for each definiton.
-        self._defs = json_dict['searchData']['tunaApiData']['posTabs']
+        try:
+            self._defs = json_dict['searchData']['tunaApiData']['posTabs']
+        except TypeError:
+            self._defs = []
 
         # Number of definitions.
         self._n_defs = len(self._defs)

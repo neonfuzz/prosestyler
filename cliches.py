@@ -1,4 +1,6 @@
 
+# add: that being said
+#      be the case
 
 cliches = {
     # Lemmatized

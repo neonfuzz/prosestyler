@@ -1,5 +1,9 @@
 
 
+# NOTE: 'consistent', 'coherent' are not nouns,
+#       but they definitely seem like nominalizations
+
+
 from nltk.corpus import wordnet as wn
 
 

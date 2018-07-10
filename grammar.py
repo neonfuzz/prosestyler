@@ -15,7 +15,8 @@ from nltk.corpus import wordnet as wn
 from nltk.parse.stanford import StanfordDependencyParser
 import numpy as np
 from pattern.en import conjugate
-from pattern.en import pluralize 
+from pattern.en import pluralize
+from scipy import optimize
 
 from cliches import cliches
 import colors
@@ -30,12 +31,13 @@ from weak_words import weak_adjs, weak_modals, weak_nouns, weak_verbs
 PARSER = argparse.ArgumentParser(description='Perform a deep grammar check.')
 PARSER.add_argument('file', help='The file to be analyzed.')
 PARSER.add_argument('-o', type=str, metavar='outfile',
-                    help='Name of output file')
+                    help='Name of output file ' \
+                         '(default: <filename>_out_<datetime>)')
 PARSER.add_argument(
     '-d', default='en_US', type=str, metavar='dictionary',
     help='Which dictionary to use (default: en_US)')
 PARSER.add_argument(
-    '-t', default=False, type=bool, metavar='train_sents',
+    '-t', action='store_true',
     help='Train the sentence tokenizer on the text instead of using '
          'the default training set; this takes longer but is useful '
          'for e.g. scientic papers which have a lot of atypical '
@@ -741,6 +743,8 @@ def main():
     # Import text
     global text  # NOTE: for debugging
     args = PARSER.parse_args()
+    if args.o is None:
+        args.o = '%s_out_%s.txt' % (args.file, datetime.now())
     with open(args.file) as myfile:
         text = Text(''.join(myfile.readlines()), save_file=args.o,
                     lang=args.d, train_sents=args.t)
