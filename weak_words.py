@@ -1,6 +1,11 @@
 
 
-weak_adjs = [
+"""
+Several lists of weak words that could probably use stronger synonyms.
+"""
+
+
+WEAK_ADJS = [
     'able',
     'amazing',
     'any',
@@ -74,7 +79,7 @@ weak_adjs = [
     ]
 
 
-weak_modals = [
+WEAK_MODALS = [
     'can',
     'could',
     'may',
@@ -87,7 +92,7 @@ weak_modals = [
     ]
 
 
-weak_nouns = [
+WEAK_NOUNS = [
     'action',
     'amount',
     'answer',
@@ -115,7 +120,7 @@ weak_nouns = [
     ]
 
 
-weak_verbs = [
+WEAK_VERBS = [
     'accord',
     'answer',
     'ask',

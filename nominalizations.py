@@ -1,5 +1,10 @@
 
 
+"""
+Tools to detect and correct nominalizations.
+"""
+
+
 # NOTE: 'consistent', 'coherent' are not nouns,
 #       but they definitely seem like nominalizations
 
@@ -7,12 +12,12 @@
 from nltk.corpus import wordnet as wn
 
 
-nominalization_endings = [
+NOMINALIZATION_ENDINGS = [
     'ance',
     'cy',
     'ence'
     'ing',
-    'ion',
+    'tion',
     'ment',
     'ness',
     'nt',
@@ -24,13 +29,13 @@ nominalization_endings = [
     ]
 
 
-random_nominalizations = [
+RANDOM_NOMINALIZATIONS = [
     'belief',
     'sale',
     'success',
     ]
 
-dont_check_list = [
+DONT_CHECK_LIST = [
     # words I use waaay too much to care about
     'simulation',
     ]
@@ -45,14 +50,14 @@ def denominalize(noun):
 
     # Determine if we should check the noun.
     should_check = False
-    for ending in nominalization_endings:
+    for ending in NOMINALIZATION_ENDINGS:
         if noun.endswith(ending) and noun != ending:
             should_check = True
 
-    if noun in random_nominalizations:
+    if noun in RANDOM_NOMINALIZATIONS:
         should_check = True
 
-    if noun in dont_check_list:
+    if noun in DONT_CHECK_LIST:
         should_check = False
 
     if should_check is False:

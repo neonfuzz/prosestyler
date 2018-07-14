@@ -1,6 +1,11 @@
 
 
-homophone_list = [
+"""
+A list of frequently-confused homophones.
+"""
+
+
+HOMOPHONE_LIST = [
     ['accept', 'except'],
     ['affect', 'effect'],
     ['air', 'heir'],

@@ -1,4 +1,10 @@
 
+
+"""
+Provide API to thesaurus.com as well as some added functionality.
+"""
+
+
 import json
 import re
 
@@ -6,7 +12,7 @@ from bs4 import BeautifulSoup
 from lxml import html
 import requests
 
-from weak_words import weak_adjs, weak_nouns, weak_verbs
+from weak_words import WEAK_ADJS, WEAK_NOUNS, WEAK_VERBS
 
 
 class Thesaurus(object):
@@ -64,18 +70,23 @@ class Thesaurus(object):
         for defn in self._defs:
             defn_syns = [
                 x['term'] for x in defn['synonyms']
-                if x['term'] not in weak_verbs \
-                and x['term'] not in weak_adjs \
-                and x['term'] not in weak_nouns]
+                if x['term'] not in WEAK_VERBS \
+                and x['term'] not in WEAK_ADJS \
+                and x['term'] not in WEAK_NOUNS]
             self._syns[defn['pos']] += defn_syns[:max_per_list]
 
         # Remove duplicates and sort alphebetically.
-        for k, v in self._syns.items():
-            self._syns[k] = list(set(v))
-            self._syns[k].sort()
+        for key, value in self._syns.items():
+            self._syns[key] = list(set(value))
+            self._syns[key].sort()
 
     @property
     def word(self):
+        """
+        Get and set the word the thesaurus is acting on.
+
+        Setting automatically updates thesaurus.
+        """
         return self._word
 
     @word.setter
@@ -86,8 +97,10 @@ class Thesaurus(object):
 
     @property
     def synonyms(self):
+        """Get the synonyms for self.word"""
         return self._syns
 
     @property
     def n_defs(self):
+        """Get the number of definitions associated with self.word"""
         return self._n_defs

@@ -1,6 +1,11 @@
 
 
-filler_words = [
+"""
+A list of filler words which can usually be outright deleted.
+"""
+
+
+FILLER_WORDS = [
     'about',
     'absolutely',
     'across',

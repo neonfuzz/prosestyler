@@ -1,5 +1,10 @@
 
 
+"""
+Classes and functions to assist in building a GUI.
+"""
+
+
 import tkinter as tk
 from tkinter import ttk
 
@@ -28,7 +33,7 @@ class TextEditWindow():
         self._master = master
 
         self._label = ttk.Label(self._master, text=label_text)
-        self._text_box = tk.Text(self._master, wrap=tk.WORD) 
+        self._text_box = tk.Text(self._master, wrap=tk.WORD)
         self._text_box.insert(tk.END, self.text)
         self._text_box.bind('<Return>', self._go)
         self._text_box.bind('<KP_Enter>', self._go)
@@ -61,8 +66,8 @@ def visual_edit(text, thestyle='clam'):
     master = tk.Tk()
     style = ttk.Style()
     style.theme_use(thestyle)
-    x, y = master.winfo_pointerxy()
-    master.geometry('+%d+%d' % (x, y))
+    pointer_x, pointer_y = master.winfo_pointerxy()
+    master.geometry('+%d+%d' % (pointer_x, pointer_y))
 
     window = TextEditWindow(master, text)
     master.mainloop()

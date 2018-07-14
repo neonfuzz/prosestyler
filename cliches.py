@@ -1,9 +1,14 @@
 
+
+"""
+A list of (lemmatized) cliches and some suggestions for replacements.
+"""
+
+
 # add: that being said
 #      be the case
 
-cliches = {
-    # Lemmatized
+CLICHES = {
     '11th hour': [],
     'a far a the eye can see': [],
     'a good a gold': [],
