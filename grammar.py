@@ -1,4 +1,3 @@
-#!/bin/python3
 
 
 from datetime import datetime
@@ -133,7 +132,7 @@ def fix_contractions(tokens):
 
 def gen_tokens(string):
     """Generate a list of tokens."""
-    tokens = nltk.tokenize.regexp_tokenize(string, '\w+|[^\w\s]|\s')
+    tokens = nltk.tokenize.regexp_tokenize(string, r'\w+|[^\w\s]|\s')
     return fix_contractions(tokens)
 
 
@@ -176,6 +175,17 @@ def penn2morphy(penntag):
 
 
 def fromx_to_id(fromx, tox, tokens):
+    """
+    Given character indices, return token indices
+
+    Arguments:
+        fromx - start index of character string
+        tox - end index of character string
+        tokens - tokenized sentence
+
+    Returns:
+        list of indices corresponding to selected tokens
+    """
     i = 0
     x = 0
     ids = []
@@ -283,12 +293,10 @@ class Text(object):
         print()
         inds = range(indices[0], indices[-1]+1)
         colors.tokenprint(tokens, inds)
-        phrase = ' '.join([tokens[i] for i in indices]).replace('  ', ' ')
+        phrase = ''.join([tokens[i] for i in indices])
         print('Possible suggestions for "%s":' % phrase)
 
         # Print list of suggestions, as well as custom options.
-        if not suggestions:
-            suggestions += ['']  # Play nicely with print_rows.
         print_rows(suggestions)
         print(' (0) Leave be.')
         if can_replace_sent is True:
@@ -412,16 +420,42 @@ class Text(object):
         return errors, suggests, ignore_list
 
     def _cliche_errors(self, tokens, ignore_list=None):
+        def cliche_lemmatizer(tags):
+            """
+            Lemmatize specifically for cliches.
+
+            Some word categories (e.g. prepositions) will be replaced
+            with all the same value.
+
+            Arguments:
+                tags - the tag pairs of the sentence
+
+            Returns:
+                lem_string - a lemmatized string that can be compared
+                             against the cliché dictionary
+            """
+            lem_string = []
+            for tag in tags:
+                if tag[1].startswith('PRP'):
+                    lem_string.append('prp')
+                else:
+                    lem_string.append(self._lemmatizer.lemmatize(
+                        tag[0], penn2morphy(tag[1]) or wn.NOUN))
+            return ' '.join(lem_string).lower()
+
         errors = []
+        words, _ = gen_words(tokens)
+        tags = gen_tags(words)
         suggests = []
-        lem = ''.join([self._lemmatizer.lemmatize(t) for t in tokens]).lower()
+        lem = cliche_lemmatizer(tags)
         if ignore_list is None:
             ignore_list = []
+
         for k in CLICHES:
             if k in lem:
                 fromx = lem.find(k)
                 tox = fromx + len(k)
-                ids = fromx_to_id(fromx, tox, tokens)
+                ids = fromx_to_id(fromx, tox, gen_tokens(lem))
                 toks = [tokens[i] for i in ids]
                 if (toks, ids) not in ignore_list:
                     errors += [(toks, ids)]
@@ -632,7 +666,7 @@ class Text(object):
             occurs = np.array([
                 i for i, lem in enumerate(lemmas) if lem[2] == word])
             dists = occurs[1:] - occurs[:-1]
-            # m can be less than 30 if the word occurs a lot.
+            # dist_thresh can be less than 30 if the word occurs a lot.
             dist_thresh = min(30, int(len(self._words)/freq/3))
             to_print = occurs[np.where(dists < dist_thresh)]
             if to_print:
@@ -641,8 +675,8 @@ class Text(object):
                 print('-----')
                 if yes_no == 'y':
                     for i in to_print:
-                        start = max(0, i-int(m/2))
-                        stop = min(i+int(1.5*m), len(lemmas))
+                        start = max(0, i-int(dist_thresh/2))
+                        stop = min(i+int(1.5*dist_thresh), len(lemmas))
                         tokens = lemmas[start:stop]
                         indices = np.where(tokens[:, 2] == word)[0]
                         colors.tokenprint(tokens[:, 0], indices)
@@ -659,6 +693,7 @@ class Text(object):
             print('{: >6}'.format('(%s)' % (i+1)), char*num)
 
     def polish(self):
+        """Run many of the default checks in order."""
         now_checking_banner('spelling')
         self.spelling()
 
@@ -693,6 +728,7 @@ class Text(object):
         self.visualize_length()
 
     def quick_check(self):
+        """Run some quick checks in order."""
         now_checking_banner('spelling')
         self.spelling()
 
@@ -728,6 +764,11 @@ class Text(object):
 
     @property
     def string(self):
+        """
+        Get/set the text string.
+
+        Setting will automatically set sentences/tokens/etc.
+        """
         return self._string
 
     @string.setter
@@ -740,6 +781,11 @@ class Text(object):
 
     @property
     def sentences(self):
+        """
+        Get/set the sentences.
+
+        Setting will automatically set string/tokens/etc.
+        """
         return self._sentences
 
     @sentences.setter
@@ -752,6 +798,11 @@ class Text(object):
 
     @property
     def tokens(self):
+        """
+        Get/set the tokens.
+
+        Setting will automatically set string/sentences/etc.
+        """
         return self._tokens
 
     @tokens.setter
@@ -764,14 +815,17 @@ class Text(object):
 
     @property
     def words(self):
+        """Get the words."""
         return self._words
 
     @property
     def tags(self):
+        """Get the tags."""
         return self._tags
 
 
 def main():
+    """Run the program with given arguments."""
     # Import text
     global TEXT  # NOTE: for debugging
     args = PARSER.parse_args()
