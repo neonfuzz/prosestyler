@@ -523,20 +523,67 @@ class Text(object):
         tags = gen_tags(words)
         if ignore_list is None:
             ignore_list = []
-        for i, wordpair in enumerate(tags):
-            pos = penn2morphy(wordpair[1])
+
+        def check_verbs(errors, suggests):
+            """
+            Check for weak verbs.
+
+            Ignores "helper verbs" e.g. "have" in the perfect tense.
+
+            Arguments:
+                errors - current list of errors
+                suggests - current list of suggestions
+
+            Returns:
+                errors - updated list of errors
+                suggests - updated list of suggestions
+            """
+            verbs = [(x[0], x[1], inds[i])
+                     for i, x in enumerate(tags)
+                     if x[1].startswith('V')]
+            verbs_lemmas = [
+                (self._lemmatizer.lemmatize(v[0], wn.VERB), v[1], v[2])
+                for v in verbs]
+            just_lemmas = [v[0] for v in verbs_lemmas]
+            if len(verbs) > 1 and (
+                    'have' in just_lemmas
+                    or 'be' in just_lemmas
+                    or 'do' in just_lemmas):
+                # Parse takes a really long time,
+                # so we check with the faster "tags" before committing.
+                parse = list(DEP_PARSER.parse(words))[0]
+                nodes = parse.nodes
+                verbs_not_aux = [
+                    self._lemmatizer.lemmatize(v['word'], wn.VERB)
+                    for v in nodes.values()
+                    if v['rel'] != 'aux'
+                    and v['tag'].startswith('V')]
+                verbs_lemmas = [
+                    v for v in verbs_lemmas if v[0] in verbs_not_aux]
+            for lemma, pos, index in verbs_lemmas:
+                tup = ([lemma], [index])
+                if lemma in WEAK_VERBS and tup not in ignore_list:
+                    errors += [tup]
+                    suggests += [self._thesaurus(lemma, pos)]
+            return errors, suggests
+
+        for i, tagpair in enumerate(tags):
+            pos = penn2morphy(tagpair[1])
             if pos is not None:
-                lemma = self._lemmatizer.lemmatize(wordpair[0], pos)
+                lemma = self._lemmatizer.lemmatize(tagpair[0], pos)
+            elif pos == wn.VERB:
+                continue
             else:
-                lemma = wordpair[0]
-            tup = ([wordpair[0]], [inds[i]])
-            if (lemma in WEAK_VERBS
-                    or lemma in WEAK_ADJS
+                lemma = tagpair[0]
+            tup = ([tagpair[0]], [inds[i]])
+            if (lemma in WEAK_ADJS
                     or lemma in WEAK_MODALS
                     or lemma in WEAK_NOUNS
                ) and tup not in ignore_list:
                 errors += [tup]
-                suggests += [self._thesaurus(wordpair[0], wordpair[1])]
+                suggests += [self._thesaurus(tagpair[0], tagpair[1])]
+        errors, suggests = check_verbs(errors, suggests)
+
         return errors, suggests, ignore_list
 
     def _filler_errors(self, tokens, ignore_list=None):
