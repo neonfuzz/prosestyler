@@ -7,7 +7,6 @@ from string import punctuation
 
 import argparse
 import enchant  # Spell Check
-import language_check  # Grammar Check
 import nltk
 from nltk.corpus import wordnet as wn
 from nltk.parse.stanford import StanfordDependencyParser
@@ -21,6 +20,7 @@ from filler_words import FILLER_WORDS
 from gui import visual_edit
 from homophone_list import HOMOPHONE_LIST
 from nominalizations import denominalize
+import language_check  # Grammar Check
 from thesaurus import Thesaurus
 from weak_words import WEAK_ADJS, WEAK_MODALS, WEAK_NOUNS, WEAK_VERBS
 
@@ -249,8 +249,7 @@ class Text(object):
             self._tokenizer = nltk.data.load(
                 'tokenizers/punkt/english.pickle').tokenize
         self._dict = enchant.DictWithPWL(lang, 'scientific_word_list.txt')
-        self._gram = language_check.LanguageTool(lang)
-        self._gram.disable_spellchecking()
+        self._gram = language_check
         self._lemmatizer = nltk.stem.WordNetLemmatizer()
 
         # Make all the things.
@@ -391,17 +390,20 @@ class Text(object):
     def _grammar_errors(self, tokens, ignore_list=None):
         errors_gram = self._gram.check(''.join(tokens))
         # Don't check for smart quotes
-        errors_gram = [err for err in errors_gram if err.ruleId != 'EN_QUOTES']
+        errors_gram = [
+            err for err in errors_gram if err['rule']['id'] != 'EN_QUOTES']
         errors = []
         suggests = []
         if ignore_list is None:
             ignore_list = []
         for err in errors_gram:
-            ids = fromx_to_id(err.fromx, err.tox, tokens)
+            fromx = err['context']['offset']
+            tox = fromx + err['context']['length']
+            ids = fromx_to_id(fromx, tox, tokens)
             toks = [tokens[i] for i in ids]
             errors += [(toks, ids)]
             errors = [err for err in errors if err not in ignore_list]
-            suggests += [err.replacements]
+            suggests += [[x['value'] for x in err['replacements']]]
         return errors, suggests, ignore_list
 
     def _homophone_errors(self, tokens, ignore_list=None):
