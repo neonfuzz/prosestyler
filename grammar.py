@@ -153,9 +153,9 @@ def gen_tags(words):
 def penn2gen(penntag):
     """Quick 'translation' between Penn and generic POS tags."""
     gen_tag = {'NN': 'noun',
-               'JJ': 'adj',
+               'JJ': 'adj.',
                'VB': 'verb',
-               'RB': 'adv'}
+               'RB': 'adv.'}
     try:
         return gen_tag[penntag[:2]]
     except KeyError:

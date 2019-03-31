@@ -39,8 +39,8 @@ class Thesaurus(object):
         self._syns = {
             'noun': [],
             'verb': [],
-            'adj': [],
-            'adv': [],
+            'adj.': [],
+            'adv.': [],
             'as in': [],
             }
 
@@ -48,11 +48,13 @@ class Thesaurus(object):
         scripts = self._soup.find_all('script')
         pattern = re.compile('window.INITIAL_STATE = {(.*?)};')
         for script in scripts:
-            match = pattern.match(script.string)
-            if match:
-                json_string = '{%s}' % match.groups()[0]
-                json_dict = json.loads(json_string)
-                break
+            string = script.string
+            if string:
+                match = pattern.match(string)
+                if match:
+                    json_string = '{%s}' % match.groups()[0]
+                    json_dict = json.loads(json_string)
+                    break
 
         # Find tabs for each definiton.
         try:
