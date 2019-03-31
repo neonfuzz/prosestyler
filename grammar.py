@@ -7,7 +7,6 @@ from string import punctuation
 import argparse
 import enchant  # Spell Check
 import nltk
-from nltk.corpus import wordnet as wn
 from nltk.parse.stanford import StanfordDependencyParser
 import numpy as np
 from pattern.en import conjugate
@@ -188,6 +187,8 @@ class Text():
     polish - run all checks in order
     quick_check - run some of the checks
     """
+    def __repr__(self):
+        return self._string
 
     def __init__(self, string, save_file=None, lang='en_US',
                  train_sents=False):
@@ -488,7 +489,7 @@ class Text():
                 for i, w in enumerate(sentence.lemmas)
                 if w[1].startswith('V')]
             just_lemmas = [v[0] for v in verbs_lemmas]
-            if len(verbs_lemmas) > 1 and (
+            if verbs_lemmas and (
                     'have' in just_lemmas
                     or 'be' in just_lemmas
                     or 'do' in just_lemmas):
