@@ -42,7 +42,6 @@ def gen_sent(string):
     # Add newlines back in
     paragraphs = [p if p != [] else ['\n\n'] for p in paragraphs]
     # Return flattened
-    #  return [Sentence(s) for p in paragraphs for s in p]
     return [s for p in paragraphs for s in p]
 
 

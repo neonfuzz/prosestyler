@@ -218,7 +218,7 @@ class Text():
         # Make all the things.
         self._string = string.replace('“', '"').replace('”', '"')
         self._string = string.replace('‘', "'").replace('’', "'")
-        self._sentences = gen_sent(self._string)
+        self._sentences = [Sentence(x) for x in gen_sent(self._string)]
         self._tokens = None
         self._words = None
         self._tags = None
@@ -292,6 +292,8 @@ class Text():
 
     def _thesaurus(self, word, pos):
         """Provide a list of synonyms for word."""
+        # TODO: move this to only use lemmas (not 'word')
+        #       update everything that calls it
         new_pos = penn2morphy(pos)
         if new_pos is not None:
             lemma = self._lemmatizer.lemmatize(word, new_pos)
@@ -311,37 +313,30 @@ class Text():
         return []
 
     def _check_loop(self, error_method):
-        for i, sent in enumerate(self.sentences):
-            tokens = gen_tokens(sent)
-            errors, suggests, ignore_list = error_method(tokens)
+        for i, sent in enumerate(self._sentences):
+            errors, suggests, ignore_list = error_method(sent)
+            tmp_sent = sent
             while errors:
                 err = errors[0]
                 new_tokens = self._suggest_toks(
-                    tokens, err[1], suggests[0], True)
-                if new_tokens == tokens:
+                    tmp_sent.tokens, err[1], suggests[0], True)
+                if new_tokens == tmp_sent.tokens:
                     ignore_list += [err]
                     errors = errors[1:]
                     suggests = suggests[1:]
                 else:
-                    new_sent = ''.join(new_tokens)
-                    for j in ',:;.?! ':
-                        new_sent = new_sent.replace(' %s' % j, j)
-                    tokens = gen_tokens(new_sent)
+                    tmp_sent = Sentence(''.join(new_tokens))
                     errors, suggests, ignore_list = error_method(
-                        tokens, ignore_list)
-            new_sent = ''.join(tokens)
-            for j in ',:;.?! ':
-                new_sent = new_sent.replace(' %s' % j, j)
-            self._sentences[i] = new_sent
+                        tmp_sent, ignore_list)
+            self._sentences[i] = tmp_sent
+            self._clean()
             self.save()
-        self._clean()
-        self.save()
 
-    def _spelling_errors(self, tokens, ignore_list=None):
+    def _spelling_errors(self, sentence, ignore_list=None):
         errors = []
         if ignore_list is None:
             ignore_list = []
-        for j, tok in enumerate(tokens):
+        for j, tok in enumerate(sentence.tokens):
             if tok == ' ' or tok == '\n' or tok in punctuation:
                 continue
             tup = ([tok], [j])
@@ -350,8 +345,8 @@ class Text():
         suggests = [self._dict.suggest(err[0][0]) for err in errors]
         return errors, suggests, ignore_list
 
-    def _grammar_errors(self, tokens, ignore_list=None):
-        errors_gram = self._gram.check(''.join(tokens))
+    def _grammar_errors(self, sentence, ignore_list=None):
+        errors_gram = self._gram.check(sentence)
         # Don't check for smart quotes
         errors_gram = [
             err for err in errors_gram if err['rule']['id'] != 'EN_QUOTES']
@@ -362,19 +357,19 @@ class Text():
         for err in errors_gram:
             fromx = err['context']['offset']
             tox = fromx + err['context']['length']
-            ids = fromx_to_id(fromx, tox, tokens)
-            toks = [tokens[i] for i in ids]
+            ids = fromx_to_id(fromx, tox, sentence.tokens)
+            toks = [sentence.tokens[i] for i in ids]
             errors += [(toks, ids)]
             errors = [err for err in errors if err not in ignore_list]
             suggests += [[x['value'] for x in err['replacements']]]
         return errors, suggests, ignore_list
 
-    def _homophone_errors(self, tokens, ignore_list=None):
+    def _homophone_errors(self, sentence, ignore_list=None):
         errors = []
         suggests = []
         if ignore_list is None:
             ignore_list = []
-        for i, tok in enumerate(tokens):
+        for i, tok in enumerate(sentence.tokens):
             for homophones in HOMOPHONE_LIST:
                 for hom in homophones:
                     if hom == tok.lower() and ([tok], [i]) not in ignore_list:
@@ -384,8 +379,8 @@ class Text():
                         ignore_list += [([h], [i]) for h in other_homs]
         return errors, suggests, ignore_list
 
-    def _cliche_errors(self, tokens, ignore_list=None):
-        def cliche_lemmatizer(tags):
+    def _cliche_errors(self, sentence, ignore_list=None):
+        def cliche_lemmatizer(lemmas):
             """
             Lemmatize specifically for cliches.
 
@@ -393,86 +388,73 @@ class Text():
             with all the same value.
 
             Arguments:
-                tags - the tag pairs of the sentence
+                lemmas - the lemma pairs of the sentence
 
             Returns:
                 lem_string - a lemmatized string that can be compared
                              against the cliché dictionary
             """
             lem_string = []
-            for tag in tags:
-                if tag[1].startswith('PRP'):
+            for lem_pair in lemmas:
+                if lem_pair[1].startswith('PRP'):
                     lem_string.append('prp')
                 else:
-                    lem_string.append(self._lemmatizer.lemmatize(
-                        tag[0], penn2morphy(tag[1]) or wn.NOUN))
+                    lem_string.append(lem_pair[0])
             return ' '.join(lem_string).lower()
 
         errors = []
-        words, _ = gen_words(tokens)
-        tags = gen_tags(words)
         suggests = []
-        lem = cliche_lemmatizer(tags)
         if ignore_list is None:
             ignore_list = []
+        lem = cliche_lemmatizer(sentence.lemmas)
 
         for k in CLICHES:
             if k in lem:
                 fromx = lem.find(k)
                 tox = fromx + len(k)
                 ids = fromx_to_id(fromx, tox, gen_tokens(lem))
-                toks = [tokens[i] for i in ids]
+                toks = [sentence.tokens[i] for i in ids]
                 if (toks, ids) not in ignore_list:
                     errors += [(toks, ids)]
                     suggests += [CLICHES[k]]
         return errors, suggests, ignore_list
 
-    def _passive_errors(self, tokens, ignore_list=None):
+    def _passive_errors(self, sentence, ignore_list=None):
         errors = []
         suggests = []
-        words, inds = gen_words(tokens)
-        tags = gen_tags(words)
-        verbs = [(x[0], x[1], inds[i])
-                 for i, x in enumerate(tags)
-                 if x[1].startswith('V')]
-        verbs_lemmas = [
-            self._lemmatizer.lemmatize(v[0], wn.VERB) for v in verbs]
         if ignore_list is None:
             ignore_list = []
-        if 'be' in verbs_lemmas and 'VBN' in [v[1] for v in verbs]:
+        verbs_lemmas = [
+            (w[0], w[1]) for w in sentence.lemmas if w[1].startswith('V')]
+        if 'be' in [v[0] for v in verbs_lemmas] \
+                and 'VBN' in [v[1] for v in verbs_lemmas]:
             # Parse takes a really long time,
             # so we check with the faster "tags" before committing.
-            parse = list(DEP_PARSER.parse(words))[0]
-            nodes = parse.nodes
+            nodes = sentence.nodes
             vbns = [n for n in nodes.values()
                     if 'auxpass' in n['deps'].keys()]
             for word in vbns:
                 be_verb_node_ids = word['deps']['auxpass']
                 be_verbs = [(nodes[i]['address']-1, nodes[i]['word'])
                             for i in be_verb_node_ids]
-                ids = [inds[bv[0]] for bv in be_verbs]
-                ids += [inds[word['address'] - 1]]
+                ids = [sentence.inds[bv[0]] for bv in be_verbs]
+                ids += [sentence.inds[word['address'] - 1]]
                 ids.sort()
-                toks = [tokens[i] for i in ids]
+                toks = [sentence.tokens[i] for i in ids]
                 tup = (toks, ids)
                 if tup not in ignore_list:
                     errors += [tup]
                     suggests += [[]]
         return errors, suggests, ignore_list
 
-    def _nominalization_errors(self, tokens, ignore_list=None):
+    def _nominalization_errors(self, sentence, ignore_list=None):
         errors = []
         suggests = []
-        words, inds = gen_words(tokens)
-        tags = gen_tags(words)
-        nouns = [(t[0], t[1], inds[i])
-                 for i, t in enumerate(tags)
-                 if t[1].startswith('NN')]
-        nouns_lemmas = [
-            (self._lemmatizer.lemmatize(n[0], wn.NOUN), n[1], n[2])
-            for n in nouns]
         if ignore_list is None:
             ignore_list = []
+        nouns_lemmas = [
+            (w[0], w[1], sentence.inds[i])
+            for i, w in enumerate(sentence.lemmas) if w[1].startswith('NN')]
         for noun in nouns_lemmas:
             denoms = denominalize(noun[0])
             tup = ([noun[0]], [noun[2]])
@@ -481,11 +463,9 @@ class Text():
                 suggests += [denoms]
         return errors, suggests, ignore_list
 
-    def _weak_words_errors(self, tokens, ignore_list=None):
+    def _weak_words_errors(self, sentence, ignore_list=None):
         errors = []
         suggests = []
-        words, inds = gen_words(tokens)
-        tags = gen_tags(words)
         if ignore_list is None:
             ignore_list = []
 
@@ -503,28 +483,24 @@ class Text():
                 errors - updated list of errors
                 suggests - updated list of suggestions
             """
-            verbs = [(x[0], x[1], inds[i])
-                     for i, x in enumerate(tags)
-                     if x[1].startswith('V')]
             verbs_lemmas = [
-                (self._lemmatizer.lemmatize(v[0], wn.VERB), v[1], v[2])
-                for v in verbs]
+                (w[0], w[1], sentence.inds[i])
+                for i, w in enumerate(sentence.lemmas)
+                if w[1].startswith('V')]
             just_lemmas = [v[0] for v in verbs_lemmas]
-            if len(verbs) > 1 and (
+            if len(verbs_lemmas) > 1 and (
                     'have' in just_lemmas
                     or 'be' in just_lemmas
                     or 'do' in just_lemmas):
                 # Parse takes a really long time,
                 # so we check with the faster "tags" before committing.
-                parse = list(DEP_PARSER.parse(words))[0]
-                nodes = parse.nodes
-                verbs_not_aux = [
-                    self._lemmatizer.lemmatize(v['word'], wn.VERB)
-                    for v in nodes.values()
-                    if v['rel'] != 'aux'
-                    and v['tag'].startswith('V')]
-                verbs_lemmas = [
-                    v for v in verbs_lemmas if v[0] in verbs_not_aux]
+                verbs_lemmas = []
+                for node in sentence.nodes.values():
+                    if node['rel'] != 'aux' and node['tag'].startswith('V'):
+                        ind = node['address']-1
+                        lem = sentence.lemmas[ind]
+                        verbs_lemmas.append(
+                            (lem[0], lem[1], sentence.inds[ind]))
             for lemma, pos, index in verbs_lemmas:
                 tup = ([lemma], [index])
                 if lemma in WEAK_VERBS and tup not in ignore_list:
@@ -532,63 +508,55 @@ class Text():
                     suggests += [self._thesaurus(lemma, pos)]
             return errors, suggests
 
-        for i, tagpair in enumerate(tags):
-            pos = penn2morphy(tagpair[1])
-            if pos is not None:
-                lemma = self._lemmatizer.lemmatize(tagpair[0], pos)
-            elif pos == wn.VERB:
+        for i, lempair in enumerate(sentence.lemmas):
+            if lempair[1].startswith('V'):
                 continue
-            else:
-                lemma = tagpair[0]
-            tup = ([tagpair[0]], [inds[i]])
-            if (lemma in WEAK_ADJS
-                    or lemma in WEAK_MODALS
-                    or lemma in WEAK_NOUNS
+            tup = ([lempair[0]], [sentence.inds[i]])
+            if (lempair[0] in WEAK_ADJS
+                    or lempair[0] in WEAK_MODALS
+                    or lempair[0] in WEAK_NOUNS
                ) and tup not in ignore_list:
                 errors += [tup]
-                suggests += [self._thesaurus(tagpair[0], tagpair[1])]
+                suggests += [self._thesaurus(lempair[0], lempair[1])]
         errors, suggests = check_verbs(errors, suggests)
 
         return errors, suggests, ignore_list
 
-    def _filler_errors(self, tokens, ignore_list=None):
+    def _filler_errors(self, sentence, ignore_list=None):
         errors = []
         suggests = []
         if ignore_list is None:
             ignore_list = []
-        for i, tok in enumerate(tokens):
+        for i, tok in enumerate(sentence.tokens):
             tup = ([tok], [i])
             if tok.lower() in FILLER_WORDS and tup not in ignore_list:
                 errors += [tup]
                 suggests += [['']]
         return errors, suggests, ignore_list
 
-    def _adverb_errors(self, tokens, ignore_list=None):
+    def _adverb_errors(self, sentence, ignore_list=None):
         errors = []
         suggests = []
-        words, inds = gen_words(tokens)
-        tags = gen_tags(words)
-        adverbs = [x[0] for x in tags
+        adverbs = [x[0] for x in sentence.tags
                    if x[1].startswith('RB') and x[0].endswith('ly')]
         if ignore_list is None:
             ignore_list = []
         if adverbs:
             # Parse takes a really long time,
             # so we check with the faster "tags" before committing.
-            parse = list(DEP_PARSER.parse(words))[0]
-            nodes = parse.nodes
-            adv_modified = sorted([n for n in nodes.values()
+            adv_modified = sorted([n for n in sentence.nodes.values()
                                    if 'advmod' in n['deps'].keys()],
                                   key=lambda k: k['address'])
             for word in adv_modified:
                 adv_node_ids = word['deps']['advmod']
-                advs = [(nodes[i]['address']-1, nodes[i]['word'])
+                advs = [(sentence.nodes[i]['address']-1,
+                         sentence.nodes[i]['word'])
                         for i in adv_node_ids
-                        if nodes[i]['word'].endswith('ly')]
-                ids = [inds[adv[0]] for adv in advs]
-                ids += [inds[word['address'] - 1]]
+                        if sentence.nodes[i]['word'].endswith('ly')]
+                ids = [sentence.inds[adv[0]] for adv in advs]
+                ids += [sentence.inds[word['address'] - 1]]
                 ids.sort()
-                toks = [tokens[i] for i in ids]
+                toks = [sentence.tokens[i] for i in ids]
                 tup = (toks, ids)
                 if advs \
                    and ids[1] - ids[0] <= 5 \
@@ -637,8 +605,9 @@ class Text():
 
     def _ask_user(self, word, freq, close):
         """Ask user if they want to view words in close proximity."""
+        nwords = len([w for sentence in self.words for w in sentence])
         print("'%s' appeard %s times (%.02f%%)." % (
-            word, freq, freq/len(self._words)*100))
+            word, freq, freq/nwords*100))
         ans = input(
             'Would you like to view occurances in proximity? (%s) ' % close)
         while not ans:
@@ -653,35 +622,33 @@ class Text():
         in close proximity.
         """
         stopwords = nltk.corpus.stopwords.words('english')
-        penn_tags = nltk.pos_tag(self._tokens)
-        morphy_tags = [(x, penn2morphy(pos)) for x, pos in penn_tags]
-
+        # TODO: We want the lemmas to include spaces somehow?
+        #       lemmatized tokens?
+        #       The end result should be printed out as proper string
+        #       (currently no spaces nor punctuation)
         lemmas = np.array([
-            (x, y, self._lemmatizer.lemmatize(x.lower(), y or 'n'))
-            for x, y in morphy_tags])
-        distr = [(k, v) for k, v in nltk.FreqDist(lemmas[:, 2]).items()
+            w[0] for sentence in self._sentences for w in sentence.lemmas])
+        distr = [(k, v) for k, v in nltk.FreqDist(lemmas).items()
                  if v > 1
                  and k not in stopwords
-                 and k not in punctuation
-                 and k != '\n'
-                 and k != ' ']
+                 and k != '\n']
         distr.sort(key=lambda x: x[1], reverse=True)
 
         # Print 'num' most frequent words.
         for i, j in distr[:num]:
-            print('%s: %.02f%%' % (i, j/len(self._words)*100))
+            print('%s: %.02f%%' % (i, j/len(lemmas)*100))
         print()
 
         # Ask if user wants to see words in proximity.
         print('-----')
         for word, freq in distr:
             occurs = np.array([
-                i for i, lem in enumerate(lemmas) if lem[2] == word])
+                i for i, lem in enumerate(lemmas) if lem == word])
             dists = occurs[1:] - occurs[:-1]
             # dist_thresh can be less than 30 if the word occurs a lot.
-            dist_thresh = min(30, int(len(self._words)/freq/3))
+            dist_thresh = min(30, int(len(lemmas)/freq/3))
             to_print = occurs[np.where(dists < dist_thresh)]
-            if to_print:
+            if to_print.shape[0]:
                 print('-----')
                 yes_no = self._ask_user(word, freq, len(to_print))
                 print('-----')
@@ -690,8 +657,8 @@ class Text():
                         start = max(0, i-int(dist_thresh/2))
                         stop = min(i+int(1.5*dist_thresh), len(lemmas))
                         tokens = lemmas[start:stop]
-                        indices = np.where(tokens[:, 2] == word)[0]
-                        colors.tokenprint(tokens[:, 0], indices)
+                        indices = np.where(tokens == word)[0]
+                        colors.tokenprint(tokens, indices)
                         input('Enter to continue. ')
                         print('-----')
 
@@ -764,15 +731,13 @@ class Text():
 
     def _clean(self):
         """Remove unneccesary whitespace."""
-        sents = self._sentences
-        for i in ',:;.?! ':
-            sents = [s.replace(' %s' % i, i) for s in sents]
+        sents = [s.clean() for s in self._sentences]
 
-        self._string = ' '.join(sents)
+        self._string = ' '.join([str(s) for s in sents])
         self._sentences = sents
-        self._tokens = gen_tokens(self._string)
-        self._words, _ = gen_words(self._tokens)
-        self._tags = gen_tags(self._words)
+        self._tokens = [t for s in self._sentences for t in s.tokens]
+        self._words = [w for s in self._sentences for w in s.words]
+        self._tags = [t for s in self._sentences for t in s.tags]
 
     @property
     def string(self):
@@ -786,54 +751,30 @@ class Text():
     @string.setter
     def string(self, string):
         self._string = string
+        self._string = self._string.replace('“', '"').replace('”', '"')
+        self._string = self._string.replace('‘', "'").replace('’', "'")
         self._sentences = gen_sent(self._string)
-        self._tokens = gen_tokens(self._string)
-        self._words, _ = gen_words(self._tokens)
-        self._tags = gen_tags(self._words)
+        self._clean()
 
     @property
     def sentences(self):
-        """
-        Get/set the sentences.
-
-        Setting will automatically set string/tokens/etc.
-        """
+        """Get the sentences. sentences cannot be set."""
         return self._sentences
-
-    @sentences.setter
-    def sentences(self, sents):
-        self._string = ' '.join(sents)
-        self._sentences = sents
-        self._tokens = gen_tokens(self._string)
-        self._words, _ = gen_words(self._tokens)
-        self._tags = gen_tags(self._words)
 
     @property
     def tokens(self):
-        """
-        Get/set the tokens.
-
-        Setting will automatically set string/sentences/etc.
-        """
-        return self._tokens
-
-    @tokens.setter
-    def tokens(self, toks):
-        self._string = ''.join(toks)
-        self._sentences = gen_sent(self._string)
-        self._tokens = toks
-        self._words, _ = gen_words(self._tokens)
-        self._tags = gen_tags(self._words)
+        """Get the tokens. tokens cannot be set."""
+        return [s.tokens for s in self._sentences]
 
     @property
     def words(self):
-        """Get the words."""
-        return self._words
+        """Get the words. words cannot be set."""
+        return [s.words for s in self._sentences]
 
     @property
     def tags(self):
-        """Get the tags."""
-        return self._tags
+        """Get the tags. tags cannot be set."""
+        return [s.tags for s in self._sentences]
 
 
 def main():
