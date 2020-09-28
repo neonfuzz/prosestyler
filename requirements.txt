@@ -1,0 +1,6 @@
+argparse
+nltk
+numpy
+pandas
+pattern
+pyenchant
