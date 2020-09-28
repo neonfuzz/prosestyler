@@ -7,7 +7,8 @@ from string import punctuation
 import argparse
 import enchant  # Spell Check
 import nltk
-from nltk.parse.stanford import StanfordDependencyParser
+from nltk.parse.corenlp import CoreNLPDependencyParser, CoreNLPServer, \
+    CoreNLPServerError
 import numpy as np
 from pattern.en import conjugate
 from pattern.en import pluralize
@@ -42,14 +43,27 @@ PARSER.add_argument(
          'punctuation. (default: False)')
 
 
-os.environ['STANFORD_PARSER'] = '/home/addie/opt/stanford/stanford-parser-' \
-                                'full-2018-02-27/stanford-parser.jar'
-os.environ['STANFORD_MODELS'] = '/home/addie/opt/stanford/stanford-parser-' \
-                                'full-2018-02-27/stanford-parser-3.9.1-' \
-                                'models.jar'
+PATH = '/home/addie/opt/stanford-corenlp-4.1.0/'
 
-DEP_PARSER = StanfordDependencyParser(
-    model_path='edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz')
+
+class Parser():
+    def __init__(self, path=PATH):
+        os.environ['CLASSPATH'] = os.environ.get('CLASSPATH', path)
+        self.server = CoreNLPServer()
+        self.parser = CoreNLPDependencyParser()
+
+    def __del__(self):
+        self.server.stop()
+
+    def parse(self, *args, **kwargs):
+        try:
+            self.server.start()
+        except CoreNLPServerError:
+            pass
+        return self.parser.parse(*args, **kwargs)
+
+
+DEP_PARSER = Parser()
 
 
 class Sentence():
