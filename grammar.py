@@ -18,12 +18,12 @@ import colors
 from filler_words import FILLER_WORDS
 from gui import visual_edit
 from helper_functions import fromx_to_id, gen_sent, gen_tags, gen_tokens, \
-                             gen_words, now_checking_banner, penn2gen, \
+                             gen_words, now_checking_banner, \
                              penn2morphy, print_rows
 from homophone_list import HOMOPHONE_LIST
 from nominalizations import denominalize
 import language_check  # Grammar Check
-from thesaurus import Thesaurus
+from thesaurus import get_synonyms
 from weak_words import WEAK_ADJS, WEAK_MODALS, WEAK_NOUNS, WEAK_VERBS
 
 
@@ -313,25 +313,9 @@ class Text():
 
     def _thesaurus(self, word, pos):
         """Provide a list of synonyms for word."""
-        # TODO: move this to only use lemmas (not 'word')
-        #       update everything that calls it
-        new_pos = penn2morphy(pos)
-        if new_pos is not None:
-            lemma = self._lemmatizer.lemmatize(word, new_pos)
-            gen_pos = penn2gen(pos)
-            syns = Thesaurus(lemma).synonyms[gen_pos]
-            if gen_pos == 'verb':
-                for i, syn in enumerate(syns):
-                    syn = syn.split(' ')
-                    syn = ' '.join([conjugate(syn[0], pos)] + syn[1:])
-                    syns[i] = syn
-            if pos == 'NNS':
-                for i, syn in enumerate(syns):
-                    syn = syn.split(' ')
-                    syn = ' '.join([pluralize(syn[0], pos)] + syn[1:])
-                    syns[i] = syn
-            return syns
-        return []
+        # TODO: Look up with word instead of lemma in all cases.
+        synonyms = get_synonyms(word, 1.1)
+        return synonyms
 
     def _check_loop(self, error_method):
         for i, sent in enumerate(self._sentences):

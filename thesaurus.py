@@ -1,108 +1,74 @@
 
 
 """
-Provide API to thesaurus.com as well as some added functionality.
+A simple thesaurus using word embeddings fine-tuned on synonym/antonym tasks.
+
+Variables:
+    THESAURUS_FILE - location of the word embeddings
+    VECS - the file, loaded
+
+Functions:
+    get_synonyms - query the thesaurus
+
+Provided Courtesy of:
+@InProceedings{mrksic:2016:naacl,
+  author = {Nikola Mrk\v{s}i\'c and Diarmuid {\'O S\'eaghdha} and
+            Blaise Thomson and Milica Ga\v{s}i\'c and Lina Rojas-Barahona and
+            Pei-Hao Su and David Vandyke and Tsung-Hsien Wen and Steve Young},
+  title = {Counter-fitting Word Vectors to Linguistic Constraints},
+  booktitle = {Proceedings of HLT-NAACL},
+  year = {2016},
+}
 """
 
-
-import json
-import re
-
-from bs4 import BeautifulSoup
-from lxml import html
-import requests
+import enchant
+import nltk
+from numpy.linalg import norm
+import pandas as pd
 
 from weak_words import WEAK_ADJS, WEAK_NOUNS, WEAK_VERBS
 
 
-class Thesaurus(object):
+LANG = 'en'
+THESAURUS_FILE = './counter-fitted-vectors.en.pkl.gz'
+VECS = pd.read_pickle(THESAURUS_FILE)
+WEAK_WORDS = WEAK_ADJS + WEAK_NOUNS + WEAK_VERBS
+DICT = enchant.DictWithPWL(LANG, 'scientific_word_list.txt')
+
+
+def _is_word_good(word):
+    if word in WEAK_WORDS:
+        return False
+    if DICT.check(word) is False:
+        return False
+    return True
+
+
+def get_synonyms(word, thresh=1.):
     """
-    Hold information about a word and its synonyms.
+    Query the thesaurus for the given word.
 
-    Instance variables:
-        word - the word you've looked up
-        synonyms - a dictionary with keys
-                    'noun', 'verb', 'adj', and 'adv'
-                   where each value is a list of synonyms for that
-                   part of speech
-        n_defs - the number of definitions for the word
+    Arguments:
+        word (str) - word to look up
+
+    Optional Arguments:
+        thresh (float) - distance cutoff for synonyms
+            default 1.0,
+            maximum is often ~1.5,
+            0.005 quantile is often ~1.2
+            0.001 quantile is often ~0.9
+
+    Returns:
+        synonyms (list of strs) - synonyms, listed in order of closeness
     """
-    def __init__(self, word, max_syns=70):
-        """Initialize the class with 'word'."""
-        # Download thesaurus information from thesaurus.com
-        self._word = word
-        self._address = 'http://www.thesaurus.com/browse/%s?s=t' % self._word
-        self._searchpage = requests.get(self._address)
-        self._soup = BeautifulSoup(self._searchpage.content, 'html.parser')
-
-        # Initialize synonyms lists.
-        self._syns = {
-            'noun': [],
-            'verb': [],
-            'adj.': [],
-            'adv.': [],
-            'as in': [],
-            }
-
-        # Locate script which has json for all synonyms.
-        scripts = self._soup.find_all('script')
-        pattern = re.compile('window.INITIAL_STATE = {(.*?)};')
-        for script in scripts:
-            string = script.string
-            if string:
-                match = pattern.match(string)
-                if match:
-                    json_string = '{%s}' % match.groups()[0]
-                    json_dict = json.loads(json_string)
-                    break
-
-        # Find tabs for each definiton.
-        try:
-            self._defs = json_dict['searchData']['tunaApiData']['posTabs']
-        except TypeError:
-            self._defs = []
-
-        # Number of definitions.
-        self._n_defs = len(self._defs)
-        if self._n_defs == 0:
-            return
-
-        # For each definition, append some synonyms to the proper pos.
-        max_per_list = int(max_syns/self._n_defs)
-        for defn in self._defs:
-            defn_syns = [
-                x['term'] for x in defn['synonyms']
-                if x['term'] not in WEAK_VERBS \
-                and x['term'] not in WEAK_ADJS \
-                and x['term'] not in WEAK_NOUNS]
-            self._syns[defn['pos']] += defn_syns[:max_per_list]
-
-        # Remove duplicates and sort alphebetically.
-        for key, value in self._syns.items():
-            self._syns[key] = list(set(value))
-            self._syns[key].sort()
-
-    @property
-    def word(self):
-        """
-        Get and set the word the thesaurus is acting on.
-
-        Setting automatically updates thesaurus.
-        """
-        return self._word
-
-    @word.setter
-    def word(self, word):
-        if word == self._word:
-            return
-        self.__init__(word)
-
-    @property
-    def synonyms(self):
-        """Get the synonyms for self.word"""
-        return self._syns
-
-    @property
-    def n_defs(self):
-        """Get the number of definitions associated with self.word"""
-        return self._n_defs
+    word_vec = VECS.loc[word]
+    dists = norm(VECS - word_vec, axis=1)
+    dists = pd.Series(dists, index=VECS.index)
+    dists = dists[dists < thresh]
+    dists.sort_values(inplace=True)
+    dists = dists[1:]  # Delete self-lookup
+    # Remove weak words and non-dictionary words.
+    good_words = pd.Series(
+        dists.index, index=dists.index).apply(lambda w: _is_word_good(w))
+    dists = dists[good_words]
+    return dists.index.values
