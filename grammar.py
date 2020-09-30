@@ -113,6 +113,9 @@ class Text():
         self.save_file = save_file
         self.save()
 
+    def __getitem__(self, idx):
+        return self.sentences[idx]
+
     def save(self):
         """Save the object to file."""
         with open(self.save_file, 'w') as myfile:

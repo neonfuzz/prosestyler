@@ -84,8 +84,8 @@ class Sentence():
     def __repr__(self):
         return self._string
 
-    def __len__(self):
-        return len(self.words)
+    def __getitem__(self, idx):
+        return self.words[idx]
 
     def __getitem__(self, index):
         return self.words[index]
