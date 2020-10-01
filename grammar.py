@@ -32,12 +32,6 @@ PARSER.add_argument('-o', type=str, metavar='outfile',
 PARSER.add_argument(
     '-d', default='en_US', type=str, metavar='dictionary',
     help='Which dictionary to use (default: en_US)')
-PARSER.add_argument(
-    '-t', action='store_true',
-    help='Train the sentence tokenizer on the text instead of using '
-         'the default training set; this takes longer but is useful '
-         'for e.g. scientic papers which have a lot of atypical '
-         'punctuation. (default: False)')
 
 
 class Text():
@@ -71,8 +65,7 @@ class Text():
     def __repr__(self):
         return self._string
 
-    def __init__(self, string, save_file=None, lang='en_US',
-                 train_sents=False):
+    def __init__(self, string, save_file=None, lang='en_US'):
         """
         Arguments:
         string - the text string to be parsed
@@ -81,18 +74,10 @@ class Text():
         save_file - the output file to be used between each step
         lang - the language to be used
             (not fully implemented, default en_US)
-        train_sents - train the sentence tokenizer on the text
-            instead of using the default training set; takes longer,
-            but useful for e.g. scientific papers.
-            (default False)
         """
         # Define dictionaries etc.
-        if train_sents is True:
-            self._tokenizer = nltk.tokenize.PunktSentenceTokenizer(
-                string).sentences_from_text
-        else:
-            self._tokenizer = nltk.data.load(
-                'tokenizers/punkt/english.pickle').tokenize
+        self._tokenizer = nltk.data.load(
+            'tokenizers/punkt/english.pickle').tokenize
         self._dict = enchant.DictWithPWL(lang, 'scientific_word_list.txt')
         self._gram = language_check
         self._lemmatizer = nltk.stem.WordNetLemmatizer()
@@ -654,8 +639,7 @@ def main():
     if args.o is None:
         args.o = '%s_out_%s.txt' % (args.file, datetime.now())
     with open(args.file) as myfile:
-        TEXT = Text(''.join(myfile.readlines()), save_file=args.o,
-                    lang=args.d, train_sents=args.t)
+        TEXT = Text(''.join(myfile.readlines()), save_file=args.o, lang=args.d)
 
     # Check that stuff
     TEXT.quick_check()
