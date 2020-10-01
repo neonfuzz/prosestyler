@@ -12,7 +12,7 @@ Tools to detect and correct nominalizations.
 from nltk.corpus import wordnet as wn
 
 
-NOMINALIZATION_ENDINGS = [
+NOMINALIZATION_ENDINGS = (
     'ance',
     'cy',
     'ence'
@@ -26,7 +26,7 @@ NOMINALIZATION_ENDINGS = [
     'sis',
     'ty',
     'ure',
-    ]
+    )
 
 
 RANDOM_NOMINALIZATIONS = [
@@ -49,10 +49,7 @@ def denominalize(noun):
         return []
 
     # Determine if we should check the noun.
-    should_check = False
-    for ending in NOMINALIZATION_ENDINGS:
-        if noun.endswith(ending) and noun != ending:
-            should_check = True
+    should_check = noun.endswith(NOMINALIZATION_ENDINGS)
 
     if noun in RANDOM_NOMINALIZATIONS:
         should_check = True
