@@ -5,21 +5,17 @@ from string import punctuation
 
 import argparse
 import enchant  # Spell Check
-import nltk
 import numpy as np
-from pattern.en import conjugate
-from pattern.en import pluralize
 
 from cliches import CLICHES
 import colors
 from filler_words import FILLER_WORDS
 from gui import visual_edit
-from helper_functions import fromx_to_id, gen_sent, gen_tags, gen_tokens, \
-                             gen_words, now_checking_banner, print_rows
+from helper_functions import fromx_to_id, now_checking_banner, print_rows
 from homophone_list import HOMOPHONE_LIST
 import language_check  # Grammar Check
 from nominalizations import denominalize
-from sentence import Sentence
+from sentence import Sentence, gen_sent, gen_tokens
 from thesaurus import get_synonyms
 from weak_words import WEAK_ADJS, WEAK_MODALS, WEAK_NOUNS, WEAK_VERBS
 
@@ -76,11 +72,8 @@ class Text():
             (not fully implemented, default en_US)
         """
         # Define dictionaries etc.
-        self._tokenizer = nltk.data.load(
-            'tokenizers/punkt/english.pickle').tokenize
         self._dict = enchant.DictWithPWL(lang, 'scientific_word_list.txt')
         self._gram = language_check
-        self._lemmatizer = nltk.stem.WordNetLemmatizer()
 
         # Make all the things.
         self._string = string.replace('“', '"').replace('”', '"')
@@ -278,27 +271,19 @@ class Text():
         suggests = []
         if ignore_list is None:
             ignore_list = []
-        verbs_lemmas = [
-            (w[0], w[1]) for w in sentence.lemmas if w[1].startswith('V')]
-        if 'be' in [v[0] for v in verbs_lemmas] \
-                and 'VBN' in [v[1] for v in verbs_lemmas]:
-            # Parse takes a really long time,
-            # so we check with the faster "tags" before committing.
-            nodes = sentence.nodes
-            vbns = [n for n in nodes.values()
-                    if 'auxpass' in n['deps'].keys()]
-            for word in vbns:
-                be_verb_node_ids = word['deps']['auxpass']
-                be_verbs = [(nodes[i]['address']-1, nodes[i]['word'])
-                            for i in be_verb_node_ids]
-                ids = [sentence.inds[bv[0]] for bv in be_verbs]
-                ids += [sentence.inds[word['address'] - 1]]
-                ids.sort()
-                toks = [sentence.tokens[i] for i in ids]
-                tup = (toks, ids)
-                if tup not in ignore_list:
-                    errors += [tup]
-                    suggests += [[]]
+        nodes = sentence.nodes
+        vbns = [n for n in nodes if 'auxpass' in [c.dep_ for c in n.children]]
+        for word in vbns:
+            children = list(word.children)
+            be_verbs = [c for c in children if c.dep_ == 'auxpass']
+            ids = [sentence.inds[bv.i] for bv in be_verbs]
+            ids += [sentence.inds[word.i]]
+            ids.sort()
+            toks = [sentence.tokens[i] for i in ids]
+            tup = (toks, ids)
+            if tup not in ignore_list:
+                errors += [tup]
+                suggests += [[]]
         return errors, suggests, ignore_list
 
     def _nominalization_errors(self, sentence, ignore_list=None):
@@ -337,24 +322,11 @@ class Text():
                 errors - updated list of errors
                 suggests - updated list of suggestions
             """
+            nodes = sentence.nodes
             verbs_lemmas = [
                 (w[0], w[1], sentence.inds[i])
                 for i, w in enumerate(sentence.lemmas)
-                if w[1].startswith('V')]
-            just_lemmas = [v[0] for v in verbs_lemmas]
-            if verbs_lemmas and (
-                    'have' in just_lemmas
-                    or 'be' in just_lemmas
-                    or 'do' in just_lemmas):
-                # Parse takes a really long time,
-                # so we check with the faster "tags" before committing.
-                verbs_lemmas = []
-                for node in sentence.nodes.values():
-                    if node['rel'] != 'aux' and node['tag'].startswith('V'):
-                        ind = node['address']-1
-                        lem = sentence.lemmas[ind]
-                        verbs_lemmas.append(
-                            (lem[0], lem[1], sentence.inds[ind]))
+                if w[1].startswith('V') and nodes[i].dep_ != 'aux']
             for lemma, pos, index in verbs_lemmas:
                 tup = ([lemma], [index])
                 if lemma in WEAK_VERBS and tup not in ignore_list:
@@ -391,37 +363,30 @@ class Text():
     def _adverb_errors(self, sentence, ignore_list=None):
         errors = []
         suggests = []
-        adverbs = [x[0] for x in sentence.tags
-                   if x[1].startswith('RB') and x[0].endswith('ly')]
         if ignore_list is None:
             ignore_list = []
-        if adverbs:
-            # Parse takes a really long time,
-            # so we check with the faster "tags" before committing.
-            adv_modified = sorted([n for n in sentence.nodes.values()
-                                   if 'advmod' in n['deps'].keys()],
-                                  key=lambda k: k['address'])
-            for word in adv_modified:
-                adv_node_ids = word['deps']['advmod']
-                advs = [(sentence.nodes[i]['address']-1,
-                         sentence.nodes[i]['word'])
-                        for i in adv_node_ids
-                        if sentence.nodes[i]['word'].endswith('ly')]
-                ids = [sentence.inds[adv[0]] for adv in advs]
-                ids += [sentence.inds[word['address'] - 1]]
-                ids.sort()
-                toks = [sentence.tokens[i] for i in ids]
-                tup = (toks, ids)
-                if advs \
-                   and ids[1] - ids[0] <= 5 \
-                   and word['tag'] is not None \
-                   and tup not in ignore_list:
-                    errors += [tup]
-                    suggests += [self._thesaurus(word['word'], word['tag'])]
+        adv_modified = sorted([n for n in sentence.nodes
+                               if 'advmod' in [c.dep_ for c in n.children]])
+        for node in adv_modified:
+            adv_node_ids = [c.i for c in node.children
+                            if c.dep_ == 'advmod'
+                            and c.text.endswith('ly')]
+            ids = [sentence.inds[i] for i in adv_node_ids]
+            ids += [sentence.inds[node.i]]
+            ids.sort()
+            toks = [sentence.tokens[i] for i in ids]
+            tup = (toks, ids)
+            if adv_node_ids \
+                    and ids[1] - ids[0] <= 5 \
+                    and node.tag_ is not None \
+                    and tup not in ignore_list:
+                errors += [tup]
+                suggests += [self._thesaurus(node.text, node.tag_)]
         return errors, suggests, ignore_list
 
     def spelling(self):
         """Run a spell check on the text!"""
+        # pylint: disable=line-too-long
         # Courtesy of http://www.jpetrie.net/scientific-word-list-for-spell-checkersspelling-dictionaries/
         self._check_loop(self._spelling_errors)
 
@@ -475,17 +440,15 @@ class Text():
         Ask user word-per-word if they'd like to view occurances
         in close proximity.
         """
-        stopwords = nltk.corpus.stopwords.words('english')
         # TODO: We want the lemmas to include spaces somehow?
         #       lemmatized tokens?
         #       The end result should be printed out as proper string
         #       (currently no spaces nor punctuation)
-        lemmas = np.array([
-            w[0] for sentence in self._sentences for w in sentence.lemmas])
-        distr = [(k, v) for k, v in nltk.FreqDist(lemmas).items()
-                 if v > 1
-                 and k not in stopwords
-                 and k != '\n']
+        lemmas = [t.lemma_ for s in self.sentences for t in s.nodes
+                  if not t.is_punct and not t.is_stop]
+
+        distr = zip(*np.unique(lemmas, return_counts=True))
+        distr = [x for x in distr if x[1] > 1]
         distr.sort(key=lambda x: x[1], reverse=True)
 
         # Print 'num' most frequent words.

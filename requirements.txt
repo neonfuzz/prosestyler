@@ -1,6 +1,5 @@
 argparse
-nltk
 numpy
 pandas
-pattern
 pyenchant
+spacy

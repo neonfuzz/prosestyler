@@ -22,7 +22,6 @@ Provided Courtesy of:
 """
 
 import enchant
-import nltk
 from numpy.linalg import norm
 import pandas as pd
 

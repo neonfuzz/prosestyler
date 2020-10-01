@@ -9,7 +9,8 @@ Tools to detect and correct nominalizations.
 #       but they definitely seem like nominalizations
 
 
-from nltk.corpus import wordnet as wn
+from thesaurus import get_synonyms
+from sentence import NLP
 
 
 NOMINALIZATION_ENDINGS = (
@@ -41,39 +42,27 @@ DONT_CHECK_LIST = [
     ]
 
 
-def denominalize(noun):
+def denominalize(noun_lemma):
     """Return verb forms of noun, if it is a nominalization."""
-    # Clean noun for processing.
-    noun = wn.morphy(noun, wn.NOUN)
-    if noun is None:
-        return []
-
     # Determine if we should check the noun.
-    should_check = noun.endswith(NOMINALIZATION_ENDINGS)
+    should_check = noun_lemma.endswith(NOMINALIZATION_ENDINGS)
 
-    if noun in RANDOM_NOMINALIZATIONS:
+    if noun_lemma in RANDOM_NOMINALIZATIONS:
         should_check = True
 
-    if noun in DONT_CHECK_LIST:
+    if noun_lemma in DONT_CHECK_LIST:
         should_check = False
 
     if should_check is False:
         return []
 
-    # Get sets of synonyms.
-    synsets = wn.synsets(noun, wn.NOUN)
+    syns = get_synonyms(noun_lemma)
+    docs = [NLP(s) for s in syns]
+    verbs = [d[0].lemma_ for d in docs if d[0].tag_.startswith('V')]
 
-    # Lemmatize (get base word) of each synset.
-    lemmas = []
-    for syn in synsets:
-        lemmas += syn.lemmas()
-
-    # Get derivations from each lemma.
-    derivs = []
-    for lem in lemmas:
-        derivs += lem.derivationally_related_forms()
-    # Filter to only have verbs.
-    derivs = [d.name() for d in derivs if d.synset().pos() == 'v']
-
-    # Return words (no duplicates)
-    return list(set(derivs))
+    # Remove duplicates while preserving order.
+    return_verbs = []
+    for v in verbs:
+        if v not in return_verbs:
+            return_verbs.append(v)
+    return return_verbs
