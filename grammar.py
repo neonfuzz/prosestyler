@@ -230,33 +230,13 @@ class Text():
         return errors, suggests, ignore_list
 
     def _cliche_errors(self, sentence, ignore_list=None):
-        def cliche_lemmatizer(lemmas):
-            """
-            Lemmatize specifically for cliches.
-
-            Some word categories (e.g. prepositions) will be replaced
-            with all the same value.
-
-            Arguments:
-                lemmas - the lemma pairs of the sentence
-
-            Returns:
-                lem_string - a lemmatized string that can be compared
-                             against the cliché dictionary
-            """
-            lem_string = []
-            for lem_pair in lemmas:
-                if lem_pair[1].startswith('PRP'):
-                    lem_string.append('prp')
-                else:
-                    lem_string.append(lem_pair[0])
-            return ' '.join(lem_string).lower()
-
         errors = []
         suggests = []
         if ignore_list is None:
             ignore_list = []
-        lem = cliche_lemmatizer(sentence.lemmas)
+        lem = ' '.join([x[0] if not x[1].startswith('PRP') else 'prp'
+                        for x in sentence.lemmas
+                        ]).lower()
 
         for k in CLICHES:
             if k in lem:
