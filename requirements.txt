@@ -1,4 +1,5 @@
 argparse
+language-tool-python
 numpy
 pandas
 pyenchant

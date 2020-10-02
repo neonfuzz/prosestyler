@@ -5,6 +5,7 @@ from string import punctuation
 
 import argparse
 import enchant  # Spell Check
+import language_tool_python  # Grammar Check
 import numpy as np
 
 from cliches import CLICHES
@@ -13,7 +14,6 @@ from filler_words import FILLER_WORDS
 from gui import visual_edit
 from helper_functions import fromx_to_id, now_checking_banner, print_rows
 from homophone_list import HOMOPHONE_LIST
-import language_check  # Grammar Check
 from nominalizations import denominalize
 from sentence import Sentence, gen_sent, gen_tokens
 from thesaurus import get_synonyms
@@ -73,7 +73,7 @@ class Text():
         """
         # Define dictionaries etc.
         self._dict = enchant.DictWithPWL(lang, 'scientific_word_list.txt')
-        self._gram = language_check
+        self._gram = language_tool_python.LanguageTool(lang)
 
         # Make all the things.
         self._string = string.replace('“', '"').replace('”', '"')
@@ -193,22 +193,25 @@ class Text():
         return errors, suggests, ignore_list
 
     def _grammar_errors(self, sentence, ignore_list=None):
-        errors_gram = self._gram.check(sentence)
+        errors_gram = self._gram.check(sentence.string)
         # Don't check for smart quotes
         errors_gram = [
-            err for err in errors_gram if err['rule']['id'] != 'EN_QUOTES']
+            err for err in errors_gram
+            if err.ruleId != 'EN_QUOTES'  # No smartquotes.
+            and not err.ruleId.startswith('MORFOLOGIK')  # No spellcheck.
+            ]
         errors = []
         suggests = []
         if ignore_list is None:
             ignore_list = []
         for err in errors_gram:
-            fromx = err['context']['offset']
-            tox = fromx + err['context']['length']
+            fromx = err.offset
+            tox = fromx + err.errorLength
             ids = fromx_to_id(fromx, tox, sentence.tokens)
             toks = [sentence.tokens[i] for i in ids]
             errors += [(toks, ids)]
-            errors = [err for err in errors if err not in ignore_list]
-            suggests += [[x['value'] for x in err['replacements']]]
+            errors = [e for e in errors if e not in ignore_list]
+            suggests += [err.replacements]
         return errors, suggests, ignore_list
 
     def _homophone_errors(self, sentence, ignore_list=None):
