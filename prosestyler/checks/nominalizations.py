@@ -14,10 +14,6 @@ Functions:
 """
 
 
-# NOTE: 'consistent', 'coherent' are not nouns,
-#       but they definitely seem like nominalizations
-
-
 from ..sentence import NLP
 
 
