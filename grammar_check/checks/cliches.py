@@ -2,6 +2,9 @@
 
 """
 A list of (lemmatized) cliches and some suggestions for replacements.
+
+Variables:
+    CLICHES (dict) - lemmatized cliches and suggested replacements
 """
 
 

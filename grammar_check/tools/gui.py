@@ -1,7 +1,13 @@
 
 
 """
-Classes and functions to assist in building a GUI.
+GUI functionality.
+
+Classes:
+    TextEditWindow - GUI window handler
+
+Functions:
+    visual_edit - provide edit window for text
 """
 
 
@@ -10,6 +16,7 @@ from tkinter import ttk
 
 
 class TextEditWindow():
+    # pylint: disable=too-few-public-methods
     """
     Present a GUI window where the user can edit text.
 
@@ -19,7 +26,7 @@ class TextEditWindow():
 
     def __init__(self, master, start_text, label_text='Edit your text:'):
         """
-        Initializes and packs tkinter window.
+        Initialize and pack tkinter window.
 
         Arguments:
             master - a tkinter parent window
@@ -46,6 +53,7 @@ class TextEditWindow():
         self._button.pack()
 
     def _go(self, event=None):
+        # pylint: disable=unused-argument
         self.text = self._text_box.get('1.0', tk.END)[:-1]
         self._master.destroy()
 

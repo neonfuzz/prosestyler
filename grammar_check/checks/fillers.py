@@ -1,7 +1,10 @@
 
 
 """
-A list of filler words which can usually be outright deleted.
+Filler words which can usually be outright deleted.
+
+Variables:
+    FILLER_WORDS (list) - words which can usually be deleted.
 """
 
 

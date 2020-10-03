@@ -1,7 +1,13 @@
 
 
 """
-Several lists of weak words that could probably use stronger synonyms.
+Weak words that could probably use stronger synonyms.
+
+Variables:
+    WEAK_ADJS (list)
+    WEAK_MODALS (list)
+    WEAK_NOUNS (list)
+    WEAK_VERBS (list)
 """
 
 

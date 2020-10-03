@@ -1,11 +1,20 @@
 
 
+"""
+Miscelaneous functionality.
+
+Functions:
+    fromx_to_id - get token indices from character indices
+    now_checking_banner - pretty banner
+    print_rows - print items in a neat, ordered list
+"""
+
 from math import ceil
 
 
 def fromx_to_id(fromx, tox, tokens):
     """
-    Given character indices, return token indices
+    Given character indices, return token indices.
 
     Arguments:
         fromx - start index of character string
@@ -15,6 +24,7 @@ def fromx_to_id(fromx, tox, tokens):
     Returns:
         list of indices corresponding to selected tokens
     """
+    # pylint: disable=invalid-name
     i = 0
     x = 0
     ids = []
@@ -37,9 +47,7 @@ def now_checking_banner(word):
 
 
 def print_rows(lis, max_rows=21, cols=3, item_width=18):
-    """
-    Given a list of items, print them, numbered, in columns and rows.
-    """
+    """Given a list of items, print them, numbered, in columns and rows."""
     if len(lis) == 1 and lis[0] == '':
         print(' (1) <delete>')
         return

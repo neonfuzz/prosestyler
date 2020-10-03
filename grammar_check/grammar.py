@@ -1,5 +1,19 @@
 
 
+"""
+The main script.
+
+Classes:
+    Text - fancy text object with loads of stlye checks
+
+Variables:
+    PARSER (argparse.ArgumentParser) - parse command line arguments
+
+Functions:
+    main - execute the main program
+"""
+
+
 from datetime import datetime
 from string import punctuation
 
@@ -8,16 +22,16 @@ import enchant  # Spell Check
 import language_tool_python  # Grammar Check
 import numpy as np
 
-from cliches import CLICHES
-import colors
-from filler_words import FILLER_WORDS
-from gui import visual_edit
-from helper_functions import fromx_to_id, now_checking_banner, print_rows
-from homophone_list import HOMOPHONE_LIST
-from nominalizations import denominalize
-from sentence import Sentence, gen_sent, gen_tokens
-from thesaurus import get_synonyms
-from weak_words import WEAK_ADJS, WEAK_MODALS, WEAK_NOUNS, WEAK_VERBS
+from .checks.cliches import CLICHES
+from .checks.fillers import FILLER_WORDS
+from .checks.homophones import HOMOPHONE_LIST
+from .checks.nominalizations import denominalize
+from .checks.weak import WEAK_ADJS, WEAK_MODALS, WEAK_NOUNS, WEAK_VERBS
+from .sentence import Sentence, gen_sent, gen_tokens
+from .tools import colors
+from .tools.gui import visual_edit
+from .tools.helper_functions import fromx_to_id, now_checking_banner, print_rows
+from .tools.thesaurus import get_synonyms, RESOURCE_PATH
 
 
 PARSER = argparse.ArgumentParser(description='Perform a deep grammar check.')
@@ -58,22 +72,28 @@ class Text():
     polish - run all checks in order
     quick_check - run some of the checks
     """
+
     def __repr__(self):
+        """Represent self as string."""
         return self._string
 
     def __init__(self, string, save_file=None, lang='en_US'):
         """
+        Initialize `Text`.
+
         Arguments:
-        string - the text string to be parsed
+            string (str) - the text string to be parsed
 
         Optional arguments:
-        save_file - the output file to be used between each step
-        lang - the language to be used
-            (not fully implemented, default en_US)
+            save_file (str) - the output file to be used between each step
+            lang (str) - the language to be used
+                (not fully implemented, default en_US)
         """
         # Define dictionaries etc.
-        self._dict = enchant.DictWithPWL(lang, 'scientific_word_list.txt')
+        self._dict = enchant.DictWithPWL(
+            lang, RESOURCE_PATH + 'scientific_word_list.txt')
         self._gram = language_tool_python.LanguageTool(lang)
+        self._thesaurus_thresh = 1.1
 
         # Make all the things.
         self._string = string.replace('“', '"').replace('”', '"')
@@ -92,6 +112,7 @@ class Text():
         self.save()
 
     def __getitem__(self, idx):
+        """Return sentence when indexed."""
         return self.sentences[idx]
 
     def save(self):
@@ -105,15 +126,14 @@ class Text():
         Ask the user to provide input on errors or style suggestions.
 
         Arguments:
-        tokens - tokens of the sentence in question
-        indices - indices of tokens to be replaced
-        suggestions - a list of possible suggestions
+            tokens (list) - tokens of the sentence in question
+            indices (list) - indices of tokens to be replaced
+            suggestions (list) - possible suggestions
 
         Optional arguments:
-        can_replace_sent - should the user have the explicit option
-            of replacing the entire sentence?
+            can_replace_sent (bool) - should the user have the explicit option
+                of replacing the entire sentence? default `False`
         """
-
         # Print the sentence with the desired token underlined.
         print()
         inds = range(indices[0], indices[-1]+1)
@@ -156,7 +176,7 @@ class Text():
     def _thesaurus(self, word, pos):
         """Provide a list of synonyms for word."""
         # TODO: Look up with word instead of lemma in all cases.
-        synonyms = get_synonyms(word, 1.1)
+        synonyms = get_synonyms(word, self._thesaurus_thresh)
         return synonyms
 
     def _check_loop(self, error_method):

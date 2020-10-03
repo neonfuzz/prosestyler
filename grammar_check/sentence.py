@@ -90,7 +90,14 @@ class Sentence():
     Methods:
         clean - remove unnecessary whitespace
     """
+
     def __init__(self, string):
+        """
+        Initialize Sentence.
+
+        Arguments:
+            string (str or spacy.tokens.Span) - text to parse
+        """
         if isinstance(string, spacy.tokens.Span):
             self._string = string.text
             self._doc = string
@@ -100,9 +107,11 @@ class Sentence():
         self.clean()
 
     def __repr__(self):
+        """Provide string representation."""
         return self._string
 
     def __getitem__(self, idx):
+        """Return when indexed."""
         return self.words[idx]
 
     @property
@@ -132,7 +141,7 @@ class Sentence():
 
     @property
     def inds(self):
-        """Indices of each word in `tokens`."""
+        """Get indices of each word in `tokens`."""
         return [i for i, tok in enumerate(self.tokens) if tok in self.words]
 
     @property
@@ -148,7 +157,7 @@ class Sentence():
 
     @property
     def nodes(self):
-        """The spaCy dependency graph."""
+        """Get the spaCy dependency graph."""
         return self._doc
 
     def clean(self):

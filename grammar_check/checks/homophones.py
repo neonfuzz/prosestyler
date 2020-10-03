@@ -1,7 +1,10 @@
 
 
 """
-A list of frequently-confused homophones.
+Frequently-confused homophones.
+
+Variables:
+    HOMOPHONE_LIST (list) - lists of homophones
 """
 
 

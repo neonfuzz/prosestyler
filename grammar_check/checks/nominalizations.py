@@ -1,7 +1,15 @@
 
 
 """
-Tools to detect and correct nominalizations.
+Detect and correct nominalizations.
+
+Variables:
+    NOMINALIZATION_ENDINGS (tuple) - word endings which imply nominalization
+    RANDOM_NOMINALIZATIONS (list) - additional nominalizations
+    DONT_CHECK_LIST (list) - ignore these nominalizations.
+
+Functions:
+    denominalize - return suggestions for verbs from a nominalization
 """
 
 
@@ -9,8 +17,8 @@ Tools to detect and correct nominalizations.
 #       but they definitely seem like nominalizations
 
 
-from thesaurus import get_synonyms
-from sentence import NLP
+from ..tools.thesaurus import get_synonyms
+from ..sentence import NLP
 
 
 NOMINALIZATION_ENDINGS = (
@@ -62,7 +70,7 @@ def denominalize(noun_lemma):
 
     # Remove duplicates while preserving order.
     return_verbs = []
-    for v in verbs:
-        if v not in return_verbs:
-            return_verbs.append(v)
+    for verb in verbs:
+        if verb not in return_verbs:
+            return_verbs.append(verb)
     return return_verbs

@@ -2,6 +2,9 @@
 
 """
 Print in different colors/styles to the command line.
+
+Functions:
+    tokenprint - pretty print sentences
 """
 
 
@@ -18,10 +21,7 @@ BORING = '\033[0m'
 
 
 def tokenprint(tokens, indices=None, style=None):
-    """
-    Print sentences from token form with given indices underlined.
-    """
-
+    """Print sentences from token form with given indices underlined."""
     if indices is None:
         print(''.join(tokens))
         return

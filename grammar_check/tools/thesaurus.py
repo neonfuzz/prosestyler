@@ -1,11 +1,12 @@
 
 
-"""
+r"""
 A simple thesaurus using word embeddings fine-tuned on synonym/antonym tasks.
 
 Variables:
-    THESAURUS_FILE - location of the word embeddings
-    VECS - the file, loaded
+    RESOURCE_PATH (str) - path to resource directory
+    THESAURUS_FILE (str) - location of the word embeddings
+    VECS (pd.DataFrame) - the file, loaded
 
 Functions:
     get_synonyms - query the thesaurus
@@ -25,14 +26,16 @@ import enchant
 from numpy.linalg import norm
 import pandas as pd
 
-from weak_words import WEAK_ADJS, WEAK_NOUNS, WEAK_VERBS
+from .. import resources
+from ..checks.weak import WEAK_ADJS, WEAK_NOUNS, WEAK_VERBS
 
 
+RESOURCE_PATH = resources.__path__[0]
 LANG = 'en'
 THESAURUS_FILE = './counter-fitted-vectors.en.pkl.gz'
 VECS = pd.read_pickle(THESAURUS_FILE)
 WEAK_WORDS = WEAK_ADJS + WEAK_NOUNS + WEAK_VERBS
-DICT = enchant.DictWithPWL(LANG, 'scientific_word_list.txt')
+DICT = enchant.DictWithPWL(LANG, RESOURCE_PATH + '/scientific_word_list.txt')
 
 
 def _is_word_good(word):
@@ -68,6 +71,6 @@ def get_synonyms(word, thresh=1.):
     dists = dists[1:]  # Delete self-lookup
     # Remove weak words and non-dictionary words.
     good_words = pd.Series(
-        dists.index, index=dists.index).apply(lambda w: _is_word_good(w))
+        dists.index, index=dists.index).apply(_is_word_good)
     dists = dists[good_words]
     return dists.index.values
