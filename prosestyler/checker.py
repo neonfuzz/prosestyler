@@ -20,6 +20,7 @@ from string import punctuation
 import argparse
 import language_tool_python  # Grammar Check
 import numpy as np
+import proselint
 
 from .checks.cliches import CLICHES
 from .checks.fillers import FILLER_WORDS
@@ -396,6 +397,24 @@ class Text():
                 suggests += [self._synonyms(node.text, node.tag_)]
         return errors, suggests, ignore_list
 
+    def _proselint_errors(self, sentence, ignore_list=None):
+        """Ask Proselint for advice."""
+        errors = []
+        suggests = []
+        if ignore_list is None:
+            ignore_list = []
+        linted = proselint.tools.lint(sentence.string)
+        for _, _message, _, _, fromx, tox, _, _, replacements in linted:
+            ids = fromx_to_id(fromx, tox, sentence.tokens)
+            toks = [sentence.tokens[i] for i in ids]
+            if toks[-1] == ' ':
+                ids = ids[:-1]
+                toks = toks[:-1]
+            errors += [(toks, ids)]
+            errors = [e for e in errors if e not in ignore_list]
+            suggests += [replacements or []]
+        return errors, suggests, ignore_list
+
     def spelling(self):
         """Run a spell check on the text!"""
         # pylint: disable=line-too-long
@@ -433,6 +452,10 @@ class Text():
     def adverbs(self):
         """Find adverbs and verbs, offer better verbs."""
         self._check_loop(self._adverb_errors)
+
+    def proselint(self):
+        """Ask Proselint for advice."""
+        self._check_loop(self._proselint_errors)
 
     def _ask_user(self, word, freq, close):
         """Ask user if they want to view words in close proximity."""
@@ -528,6 +551,9 @@ class Text():
 
         now_checking_banner('adverbs')
         self.adverbs()
+
+        now_checking_banner('Proselint')
+        self.proselint()
 
         now_checking_banner('frequent words')
         self.frequent_words()
