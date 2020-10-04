@@ -174,7 +174,7 @@ class Sentence():
     @property
     def words(self):
         """Only the words of the sentence."""
-        return [tok.text for tok in self._doc if not tok.is_punct]
+        return [tok.text for tok in self._doc]
 
     @property
     def inds(self):

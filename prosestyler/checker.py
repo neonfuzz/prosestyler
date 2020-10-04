@@ -284,8 +284,8 @@ class Text():
         for word in vbns:
             children = list(word.children)
             be_verbs = [c for c in children if c.dep_ == 'auxpass']
-            ids = [sentence.inds[bv.i] for bv in be_verbs]
-            ids += [sentence.inds[word.i]]
+            ids = [sentence.inds[bv.i-nodes.start] for bv in be_verbs]
+            ids += [sentence.inds[word.i-nodes.start]]
             ids.sort()
             toks = [sentence.tokens[i] for i in ids]
             tup = (toks, ids)
