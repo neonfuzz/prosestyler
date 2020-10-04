@@ -22,12 +22,69 @@ Variables:
 
 
 # pylint: disable=no-name-in-module
+from string import punctuation
+
 import spacy
 from spacy.lang.punctuation import TOKENIZER_PREFIXES, TOKENIZER_SUFFIXES, \
                                    TOKENIZER_INFIXES
 from spacy.tokenizer import Tokenizer
 from spacy.util import compile_prefix_regex, compile_suffix_regex, \
-                       compile_infix_regex
+                       compile_infix_regex, filter_spans
+
+
+def _custom_sent_boundaries(doc):
+    """
+    Create custom sentence tokenizing boundaries for spaCy.
+
+    By default, sentences could be splitting with e.g. a comma at the
+    beginning of a sentence. This function forces all punctuation to
+    not be allowed to start a sentence.
+
+    Additionally, 'et. al.', 'i.e.', and 'e.g.' will not split a sentence.
+
+    Arguments:
+        doc (spacy.tokens.Span) - the spacy doc to process
+
+    Returns:
+        doc (spacy.tokens.Span) - processed doc
+    """
+    for token in doc[1:-1]:
+        if token.text in punctuation:
+            doc[token.i].is_sent_start = False
+        if token.text == 'al' \
+                and doc[token.i+1].text == '.' \
+                and doc[token.i-1].text == '.' \
+                and doc[token.i-2].text == 'et':
+            doc[token.i].is_sent_start = False
+        if token.text == 'i.e' \
+                and doc[token.i+1].text == '.':
+            doc[token.i+2].is_sent_start = False
+    return doc
+
+
+def _custom_token_boundaries(doc):
+    """
+    Create custom token boundaries that keep abbreviations together.
+
+    Merges 'e.g.', 'i.e.', 'et.', and 'al.' into a single token each.
+
+    Arguments:
+        doc (spacy.tokens.Span) - the spaCy doc to process
+
+    Returns:
+        doc (spacy.tokens.Span) - processed doc
+
+    """
+    merge_list = []
+    for token in doc:
+        if token.text in ['et', 'al', 'i.e', 'e.g'] \
+                and doc[token.i+1].text == '.':
+            merge_list.append(doc[token.i:token.i+2])
+    merge_list = filter_spans(merge_list)
+    with doc.retokenize() as retokenizer:
+        for span in merge_list:
+            retokenizer.merge(span)
+    return doc
 
 
 class TokenizeAndParse():
@@ -73,6 +130,10 @@ class TokenizeAndParse():
             infix_finditer=infix_re,
             )
         self._nlp.tokenizer = tokenizer
+
+        # Custom sentence and token boundaries.
+        self._nlp.add_pipe(_custom_sent_boundaries, before='parser')
+        self._nlp.add_pipe(_custom_token_boundaries, before='parser')
 
     @property
     def nlp(self):
