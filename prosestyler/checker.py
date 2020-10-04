@@ -635,21 +635,19 @@ class Text():
 def check():
     """Run the program with given arguments."""
     # Import text
-    global TEXT  # NOTE: for debugging
     args = PARSER.parse_args()
     if args.o is None:
         args.o = '%s_out_%s.txt' % (args.file, datetime.now())
     with open(args.file) as myfile:
-        TEXT = Text(''.join(myfile.readlines()), save_file=args.o, lang=args.d)
+        text = Text(''.join(myfile.readlines()), save_file=args.o, lang=args.d)
 
     # Check that stuff
-    TEXT.quick_check()
+    text.quick_check()
 
     # Final result
-    print('\n\n%s' % TEXT.string)
+    print('\n\n%s' % text.string)
 
-    TEXT.save()
+    text.save()
 
 if __name__ == '__main__':
-    TEXT = None  # NOTE: for debugging
     check()
