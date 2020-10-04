@@ -208,11 +208,19 @@ class Text():
         errors = []
         if ignore_list is None:
             ignore_list = []
-        for j, tok in enumerate(sentence.tokens):
-            if tok == ' ' or tok == '\n' or tok in punctuation:
+        nodes = sentence.nodes
+        for tok in nodes:
+            if tok.ent_iob != 2:
+                # If token is part of a named entity, don't spellcheck.
                 continue
-            tup = ([tok], [j])
-            if self._dict.check(tok) is False and tup not in ignore_list:
+            if tok.text == ' ' or tok.text == '\n' or tok.text in punctuation:
+                continue
+            try:
+                tup = ([tok.text], [sentence.inds[tok.i-nodes.start]])
+            except AttributeError:
+                # For the very first sentence, `nodes` might not have `start`
+                tup = ([tok.text], [sentence.inds[tok.i]])
+            if self._dict.check(tok.text) is False and tup not in ignore_list:
                 errors += [tup]
         suggests = [self._dict.suggest(err[0][0]) for err in errors]
         return errors, suggests, ignore_list
