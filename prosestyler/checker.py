@@ -366,44 +366,26 @@ class Text():
         if ignore_list is None:
             ignore_list = []
 
-        def check_verbs(errors, suggests):
-            """
-            Check for weak verbs.
+        for node in sentence.nodes:
+            lemma = node.lemma_
+            pos = node.tag_
+            try:
+                idx = sentence.inds[node.i-sentence.nodes.start]
+            except AttributeError:
+                idx = sentence.inds[node.i]
+            tup = ([lemma], [idx])
 
-            Ignores "helper verbs" e.g. "have" in the perfect tense.
-
-            Arguments:
-                errors - current list of errors
-                suggests - current list of suggestions
-
-            Returns:
-                errors - updated list of errors
-                suggests - updated list of suggestions
-            """
-            nodes = sentence.nodes
-            verbs_lemmas = [
-                (w[0], w[1], sentence.inds[i])
-                for i, w in enumerate(sentence.lemmas)
-                if w[1].startswith('V') and nodes[i].dep_ != 'aux']
-            for lemma, pos, index in verbs_lemmas:
-                tup = ([lemma], [index])
-                if lemma in WEAK_VERBS and tup not in ignore_list:
+            if tup not in ignore_list:
+                if pos.startswith('V') \
+                        and node.dep_ != 'aux' \
+                        and lemma in WEAK_VERBS:
                     errors += [tup]
                     suggests += [self._synonyms(lemma, pos)]
-            return errors, suggests
-
-        for i, lempair in enumerate(sentence.lemmas):
-            if lempair[1].startswith('V'):
-                continue
-            tup = ([lempair[0]], [sentence.inds[i]])
-            if (lempair[0] in WEAK_ADJS
-                    or lempair[0] in WEAK_MODALS
-                    or lempair[0] in WEAK_NOUNS
-               ) and tup not in ignore_list:
-                errors += [tup]
-                suggests += [self._synonyms(lempair[0], lempair[1])]
-        errors, suggests = check_verbs(errors, suggests)
-
+                elif lemma in WEAK_ADJS \
+                        or lemma in WEAK_MODALS \
+                        or lemma in WEAK_NOUNS:
+                    errors += [tup]
+                    suggests += [self._synonyms(lemma, pos)]
         return errors, suggests, ignore_list
 
     def _filler_errors(self, sentence, ignore_list=None):
@@ -439,7 +421,7 @@ class Text():
                     and node.tag_ is not None \
                     and tup not in ignore_list:
                 errors += [tup]
-                suggests += [self._synonyms(node.text, node.tag_)]
+                suggests += [self._synonyms(node.text, pos)]
         return errors, suggests, ignore_list
 
     def _proselint_errors(self, sentence, ignore_list=None):
