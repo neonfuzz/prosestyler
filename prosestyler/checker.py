@@ -30,6 +30,7 @@ from .checks.weak import WEAK_ADJS, WEAK_MODALS, WEAK_NOUNS, WEAK_VERBS
 from . import resources
 from .sentence import Sentence, gen_sent, gen_tokens
 from .tools import colors
+from .tools.extended_argparse import BooleanOptionalAction
 from .tools.gui import visual_edit
 from .tools.helper_functions import fromx_to_id, now_checking_banner, \
     print_rows
@@ -40,7 +41,8 @@ from .tools.spellcheck import SpellCheck
 RESOURCE_PATH = resources.__path__[0]
 
 
-PARSER = argparse.ArgumentParser(description='Perform a deep grammar check.')
+PARSER = argparse.ArgumentParser(
+    description='Perform a deep grammar and style check.')
 PARSER.add_argument('file', help='The file to be analyzed.')
 PARSER.add_argument('-o', type=str, metavar='outfile',
                     help='Name of output file ' \
@@ -48,6 +50,42 @@ PARSER.add_argument('-o', type=str, metavar='outfile',
 PARSER.add_argument(
     '-d', default='en_US', type=str, metavar='dictionary',
     help='Which dictionary to use (default: en_US)')
+PARSER.add_argument(
+    '--spelling', action=BooleanOptionalAction, default=True,
+    help='Run a spellcheck')
+PARSER.add_argument(
+    '--grammar', action=BooleanOptionalAction, default=True,
+    help='Run a grammar check')
+PARSER.add_argument(
+    '--homophones', action=BooleanOptionalAction, default=False,
+    help='Show every detected homophone')
+PARSER.add_argument(
+    '--cliches', action=BooleanOptionalAction, default=True,
+    help='Check for cliches')
+PARSER.add_argument(
+    '--passive', action=BooleanOptionalAction, default=True,
+    help='Check for passive voice')
+PARSER.add_argument(
+    '--nominalizations', action=BooleanOptionalAction, default=True,
+    help='Check for nominalizations')
+PARSER.add_argument(
+    '--weak', action=BooleanOptionalAction, default=False,
+    help='Check for weak words')
+PARSER.add_argument(
+    '--filler', action=BooleanOptionalAction, default=True,
+    help='Check for filler words')
+PARSER.add_argument(
+    '--adverbs', action=BooleanOptionalAction, default=True,
+    help='Check for adverbs')
+PARSER.add_argument(
+    '--lint', action=BooleanOptionalAction, default=False,
+    help='Run Proselint on the text')
+PARSER.add_argument(
+    '--frequent', action=BooleanOptionalAction, default=False,
+    help='Show the most frequently-used words')
+PARSER.add_argument(
+    '--vis-length', action=BooleanOptionalAction, default=False,
+    help='Visualize sentence lengths')
 
 
 class Text():
@@ -76,8 +114,6 @@ class Text():
         proselint - ask Proselint for advice
         frequent_words - list the most-used words
         visualize_length - provide visual cues for sentence length
-        polish - run all checks in order
-        quick_check - run some of the checks
     """
 
     def __repr__(self):
@@ -428,42 +464,52 @@ class Text():
         """Run a spell check on the text."""
         # pylint: disable=line-too-long
         # Courtesy of http://www.jpetrie.net/scientific-word-list-for-spell-checkersspelling-dictionaries/
+        now_checking_banner('spelling')
         self._check_loop(self._spelling_errors)
 
     def grammar(self):
         """Run a grammar check on the text."""
+        now_checking_banner('grammar')
         self._check_loop(self._grammar_errors)
 
     def homophone_check(self):
         """Point out every single homophone, for good measure."""
+        now_checking_banner('homophones')
         self._check_loop(self._homophone_errors)
 
     def cliches(self):
         """Highlight cliches and offer suggestions."""
+        now_checking_banner('clichés')
         self._check_loop(self._cliche_errors)
 
     def passive_voice(self):
         """Point out instances of passive voice."""
+        now_checking_banner('passive voice')
         self._check_loop(self._passive_errors)
 
     def nominalizations(self):
         """Find many nominalizations and suggest stronger verbs."""
+        now_checking_banner('nominalizations')
         self._check_loop(self._nominalization_errors)
 
     def weak_words(self):
         """Find weak words and suggest stronger ones."""
+        now_checking_banner('weak words')
         self._check_loop(self._weak_words_errors)
 
     def filler_words(self):
         """Point out filler words and offer to delete them."""
+        now_checking_banner('filler words')
         self._check_loop(self._filler_errors)
 
     def adverbs(self):
         """Find adverbs and verbs, offer better verbs."""
+        now_checking_banner('adverbs')
         self._check_loop(self._adverb_errors)
 
     def proselint(self):
         """Ask Proselint for advice."""
+        now_checking_banner('Proselint')
         self._check_loop(self._proselint_errors)
 
     def _ask_user(self, word, freq, close):
@@ -488,6 +534,7 @@ class Text():
         #       lemmatized tokens?
         #       The end result should be printed out as proper string
         #       (currently no spaces nor punctuation)
+        now_checking_banner('frequent words')
         lemmas = [t.lemma_ for s in self.sentences for t in s.nodes
                   if not t.is_punct and not t.is_stop]
 
@@ -525,74 +572,13 @@ class Text():
 
     def visualize_length(self, char='X'):
         """Produce a visualization of sentence length."""
+        now_checking_banner('sentence length')
         for i, sent in enumerate(self._sentences):
             if sent == '\n\n':
                 print()
                 continue
             num = len([x for x in sent if x != ' ' and x not in punctuation])
             print('{: >6}'.format('(%s)' % (i+1)), char*num)
-
-    def polish(self):
-        """Run many of the default checks in order."""
-        now_checking_banner('spelling')
-        self.spelling()
-
-        now_checking_banner('grammar')
-        self.grammar()
-
-        now_checking_banner('homophones')
-        self.homophone_check()
-
-        now_checking_banner('clichés')
-        self.cliches()
-
-        now_checking_banner('passive voice')
-        self.passive_voice()
-
-        now_checking_banner('nominalizations')
-        self.nominalizations()
-
-        now_checking_banner('weak words')
-        self.weak_words()
-
-        now_checking_banner('filler words')
-        self.filler_words()
-
-        now_checking_banner('adverbs')
-        self.adverbs()
-
-        now_checking_banner('Proselint')
-        self.proselint()
-
-        now_checking_banner('frequent words')
-        self.frequent_words()
-
-        now_checking_banner('variation in sentence length')
-        self.visualize_length()
-
-    def quick_check(self):
-        """Run some quick checks in order."""
-        now_checking_banner('spelling')
-        self.spelling()
-
-        now_checking_banner('grammar')
-        self.grammar()
-
-        now_checking_banner('clichés')
-        self.cliches()
-
-        now_checking_banner('passive voice')
-        self.passive_voice()
-
-        now_checking_banner('nominalizations')
-        self.nominalizations()
-
-        now_checking_banner('filler words')
-        self.filler_words()
-
-        now_checking_banner('adverbs')
-        self.adverbs()
-
     def _clean(self):
         """Remove unneccesary whitespace."""
         sents = [s.clean() for s in self._sentences]
@@ -650,8 +636,31 @@ def check():
     with open(args.file) as myfile:
         text = Text(''.join(myfile.readlines()), save_file=args.o, lang=args.d)
 
-    # Check that stuff
-    text.quick_check()
+    # Check everything.
+    if args.spelling:
+        text.spelling()
+    if args.grammar:
+        text.grammar()
+    if args.homophones:
+        text.homophone_check()
+    if args.cliches:
+        text.cliches()
+    if args.passive:
+        text.passive_voice()
+    if args.nominalizations:
+        text.nominalizations()
+    if args.weak:
+        text.weak_words()
+    if args.filler:
+        text.filler_words()
+    if args.adverbs:
+        text.adverbs()
+    if args.lint:
+        text.proselint()
+    if args.frequent:
+        text.frequent_words()
+    if args.vis_length:
+        text.visualize_length()
 
     # Final result
     print('\n\n%s' % text.string)
