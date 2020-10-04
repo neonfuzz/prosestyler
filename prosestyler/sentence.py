@@ -120,8 +120,13 @@ class TokenizeAndParse():
         # built-in exceptions list. This has
         # the effect of keeping e.g. contractions
         # together as one token.
+        suffixes = TOKENIZER_SUFFIXES
+        for suf in ["'s", "'S", '’s', '’S']:
+            # Possessives are handled in suffixes.
+            # We will not split on these.
+            suffixes.remove(suf)
         prefix_re = compile_prefix_regex(TOKENIZER_PREFIXES).search
-        suffix_re = compile_suffix_regex(TOKENIZER_SUFFIXES).search
+        suffix_re = compile_suffix_regex(suffixes).search
         infix_re = compile_infix_regex(TOKENIZER_INFIXES).finditer
         tokenizer = Tokenizer(
             self._nlp.vocab,
