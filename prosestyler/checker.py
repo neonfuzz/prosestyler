@@ -102,7 +102,7 @@ class Text():
 
         # Make all the things.
         self._string = string.replace('“', '"').replace('”', '"')
-        self._string = string.replace('‘', "'").replace('’', "'")
+        self._string = self._string.replace('‘', "'").replace('’', "'")
         self._sentences = [Sentence(x) for x in gen_sent(self._string)]
         self._tokens = None
         self._words = None
