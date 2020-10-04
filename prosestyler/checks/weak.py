@@ -93,7 +93,6 @@ WEAK_MODALS = [
     'must',
     'shall',
     'should',
-    'will',
     'would',
     ]
 
