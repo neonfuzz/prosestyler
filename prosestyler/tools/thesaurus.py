@@ -20,6 +20,7 @@ Provided Courtesy of:
 }
 """
 
+import numpy as np
 from numpy.linalg import norm
 import pandas as pd
 
@@ -60,6 +61,7 @@ class Thesaurus():
         """Get word vectors."""
         if self._vecs is None:
             self._vecs = pd.read_pickle(THESAURUS_FILE)
+            self._vecs = self._vecs.loc[self._vecs.index.dropna()]
         return self._vecs
 
     def _is_word_good(self, word):
@@ -86,7 +88,11 @@ class Thesaurus():
         Returns:
             synonyms (np.array) - synonyms for `word`, sorted by relevance
         """
-        word_vec = self.vecs.loc[word]
+        try:
+            word_vec = self.vecs.loc[word.lower()]
+        except KeyError:
+            return np.array([])
+
         dists = norm(self.vecs - word_vec, axis=1)
         dists = pd.Series(dists, index=self.vecs.index)
         dists = dists[dists < thresh]
