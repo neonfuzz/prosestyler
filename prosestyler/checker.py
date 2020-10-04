@@ -55,28 +55,29 @@ class Text():
     A fancy text object which can provide style suggestions.
 
     Instance variables:
-    save_file - the file to be saved as the checks are performed
-    sentences - a list of sententces within the text
-    string - a string of the entire text
-    tags - a list of words and their parts of speech tags
-    tokens - a list of tokens
-    words - a list of words
+        save_file - the file to be saved as the checks are performed
+        sentences - a list of sententces within the text
+        string - a string of the entire text
+        tags - a list of words and their parts of speech tags
+        tokens - a list of tokens
+        words - a list of words
 
     Methods:
-    save - save the text to a file
-    spelling - check spelling
-    grammar - check grammar
-    homophone_check - highlight homophones
-    cliches - point out overused phrases
-    passive_voice - check for passive voice
-    nominalizations - point out nominalizations
-    weak_words - highlight weak words
-    filler_words - point out words that may be unneccesary
-    adverbs - highlight adverbs
-    frequent_words - list the most-used words
-    visualize_length - provide visual cues for sentence length
-    polish - run all checks in order
-    quick_check - run some of the checks
+        save - save the text to a file
+        spelling - check spelling
+        grammar - check grammar
+        homophone_check - highlight homophones
+        cliches - point out overused phrases
+        passive_voice - check for passive voice
+        nominalizations - point out nominalizations
+        weak_words - highlight weak words
+        filler_words - point out words that may be unneccesary
+        adverbs - highlight adverbs
+        proselint - ask Proselint for advice
+        frequent_words - list the most-used words
+        visualize_length - provide visual cues for sentence length
+        polish - run all checks in order
+        quick_check - run some of the checks
     """
 
     def __repr__(self):
@@ -424,13 +425,13 @@ class Text():
         return errors, suggests, ignore_list
 
     def spelling(self):
-        """Run a spell check on the text!"""
+        """Run a spell check on the text."""
         # pylint: disable=line-too-long
         # Courtesy of http://www.jpetrie.net/scientific-word-list-for-spell-checkersspelling-dictionaries/
         self._check_loop(self._spelling_errors)
 
     def grammar(self):
-        """Run a grammar check on the text!"""
+        """Run a grammar check on the text."""
         self._check_loop(self._grammar_errors)
 
     def homophone_check(self):
@@ -656,6 +657,3 @@ def check():
     print('\n\n%s' % text.string)
 
     text.save()
-
-if __name__ == '__main__':
-    check()
