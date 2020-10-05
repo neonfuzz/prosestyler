@@ -215,9 +215,8 @@ class Text():
                 tokens = tokens[:indices[0]] + [ans] + tokens[indices[-1]+1:]
         return tokens
 
-    def _synonyms(self, word, pos):
+    def _synonyms(self, word):
         """Provide a list of synonyms for word."""
-        # TODO: Look up with word instead of lemma in all cases.
         synonyms = self._thesaurus.get_synonyms(word)
         return synonyms
 
@@ -371,25 +370,26 @@ class Text():
             ignore_list = []
 
         for node in sentence.nodes:
+            text = node.text
             lemma = node.lemma_
             pos = node.tag_
             try:
                 idx = sentence.inds[node.i-sentence.nodes.start]
             except AttributeError:
                 idx = sentence.inds[node.i]
-            tup = ([lemma], [idx])
+            tup = ([text], [idx])
 
             if tup not in ignore_list:
                 if pos.startswith('V') \
                         and node.dep_ != 'aux' \
                         and lemma in WEAK_VERBS:
                     errors += [tup]
-                    suggests += [self._synonyms(lemma, pos)]
+                    suggests += [self._synonyms(text)]
                 elif lemma in WEAK_ADJS \
                         or lemma in WEAK_MODALS \
                         or lemma in WEAK_NOUNS:
                     errors += [tup]
-                    suggests += [self._synonyms(lemma, pos)]
+                    suggests += [self._synonyms(text)]
         return errors, suggests, ignore_list
 
     def _filler_errors(self, sentence, ignore_list=None):
@@ -425,7 +425,7 @@ class Text():
                     and node.tag_ is not None \
                     and tup not in ignore_list:
                 errors += [tup]
-                suggests += [self._synonyms(node.text, pos)]
+                suggests += [self._synonyms(node.text)]
         return errors, suggests, ignore_list
 
     def _proselint_errors(self, sentence, ignore_list=None):
