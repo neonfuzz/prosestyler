@@ -180,7 +180,7 @@ class Text():
         print()
         inds = range(indices[0], indices[-1]+1)
         colors.tokenprint(tokens, inds)
-        phrase = ''.join([tokens[i] for i in indices])
+        phrase = ''.join([tokens[i] for i in inds])
         print('Possible suggestions for "%s":' % phrase)
 
         # Print list of suggestions, as well as custom options.
