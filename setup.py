@@ -33,6 +33,7 @@ setup(
         'language-tool-python',
         'numpy',
         'pandas',
+        'proselint',
         'pyenchant',
         'spacy',
         ],

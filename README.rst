@@ -57,8 +57,10 @@ Requirements
 
 hspell
 hunspell
+hunspell-en_US
 libvoikko
 nuspell
+tk
 
 Authors
 -------
