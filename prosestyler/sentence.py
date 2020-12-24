@@ -257,8 +257,7 @@ class Sentence():
     @property
     def lemmas(self):
         """Tuples of each word lemma and its POS tag."""
-        return [(tok.lemma_, tok.tag_) for tok in self._doc
-                if not tok.is_punct]
+        return [(tok.lemma_, tok.tag_) for tok in self._doc]
 
     @property
     def nodes(self):
