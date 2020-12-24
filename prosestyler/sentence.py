@@ -324,6 +324,10 @@ class Text():
         """Return sentence when indexed."""
         return self.sentences[idx]
 
+    def __len__(self):
+        """Return number of sentences."""
+        return len(self.sentences)
+
     def save(self):
         """Save the object to file."""
         with open(self.save_file, 'w') as myfile:
