@@ -213,7 +213,8 @@ class TextCheck(Text):
             while errors:
                 err = errors[0]
                 new_tokens = self._suggest_toks(
-                    tmp_sent.tokens, err[1], suggests[0], True)
+                    # TODO: why is this 1 and not 0??
+                    tmp_sent.tokens, err[1], suggests[0], messages[0], True)
                 if new_tokens == tmp_sent.tokens:
                     ignore_list += [err]
                     errors = errors[1:]
@@ -268,6 +269,8 @@ class TextCheck(Text):
             ids = fromx_to_id(fromx, tox, sentence.tokens)
             toks = [sentence.tokens[i] for i in ids]
             errors += [(toks, ids)]
+            # TODO: I think this would mess up suggestion/message
+            #       order if errors wind up in the ignore list.
             errors = [e for e in errors if e not in ignore_list]
             suggests += [err.replacements]
             messages += [err.message]
