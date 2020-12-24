@@ -6,10 +6,15 @@ An interactive grammar and style tool.
 Usage
 -----
 
-usage: prosestyler_app [-h] [-o outfile] [-d dictionary] [--spelling]
-                       [--grammar] [--homophones] [--cliches] [--passive]
-                       [--nominalizations] [--weak] [--filler] [--adverbs]
-                       [--lint] [--frequent] [--vis-length]
+usage: prosestyler_app [-h] [-o outfile] [-d dictionary]
+                       [-l check_name [check_name ...]] [--all]
+                       [--spelling | --no-spelling] [--grammar | --no-grammar]
+                       [--cliches | --no-cliches] [--passive | --no-passive]
+                       [--nominalizations | --no-nominalizations]
+                       [--filler | --no-filler] [--adverbs | --no-adverbs]
+                       [--homophones | --no-homophones] [--weak | --no-weak]
+                       [--lint | --no-lint] [--frequent | --no-frequent]
+                       [--vis-length | --no-vis-length]
                        file
 
 Perform a deep grammar and style check.
@@ -19,29 +24,32 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  -o outfile            Name of output file (default:
-                        <filename>_out_<datetime>)
+  -o outfile            Name of output file (default: <filename>_out_<datetime>)
   -d dictionary         Which dictionary to use (default: en_US)
+  -l check_name [check_name ...]
+                        List of checks to use (overrides all other options, except
+                        --all).
+  --all                 Use ALL checks (overrides all other options, including -l).
   --spelling, --no-spelling
                         Run a spellcheck (default: True)
   --grammar, --no-grammar
                         Run a grammar check (default: True)
-  --homophones, --no-homophones
-                        Show every detected homophone (default: False)
   --cliches, --no-cliches
                         Check for cliches (default: True)
   --passive, --no-passive
                         Check for passive voice (default: True)
   --nominalizations, --no-nominalizations
                         Check for nominalizations (default: True)
-  --weak, --no-weak     Check for weak words (default: False)
   --filler, --no-filler
                         Check for filler words (default: True)
   --adverbs, --no-adverbs
                         Check for adverbs (default: True)
+  --homophones, --no-homophones
+                        Show every detected homophone (default: False)
+  --weak, --no-weak     Check for weak words (default: False)
   --lint, --no-lint     Run Proselint on the text (default: False)
   --frequent, --no-frequent
-                        Show the most frequently-used words (default: False)
+                        Show the most frequently used words (default: False)
   --vis-length, --no-vis-length
                         Visualize sentence lengths (default: False)
 

@@ -51,14 +51,18 @@ PARSER.add_argument(
     '-d', default='en_US', type=str, metavar='dictionary',
     help='Which dictionary to use (default: en_US)')
 PARSER.add_argument(
+    '-l', type=str, nargs='+', metavar='check_name',
+    help='List of checks to use (overrides all other options, except --all).'
+    )
+PARSER.add_argument(
+    '--all', action='store_true',
+    help='Use ALL checks (overrides all other options, including -l).')
+PARSER.add_argument(
     '--spelling', action=BooleanOptionalAction, default=True,
     help='Run a spellcheck')
 PARSER.add_argument(
     '--grammar', action=BooleanOptionalAction, default=True,
     help='Run a grammar check')
-PARSER.add_argument(
-    '--homophones', action=BooleanOptionalAction, default=False,
-    help='Show every detected homophone')
 PARSER.add_argument(
     '--cliches', action=BooleanOptionalAction, default=True,
     help='Check for cliches')
@@ -69,20 +73,23 @@ PARSER.add_argument(
     '--nominalizations', action=BooleanOptionalAction, default=True,
     help='Check for nominalizations')
 PARSER.add_argument(
-    '--weak', action=BooleanOptionalAction, default=False,
-    help='Check for weak words')
-PARSER.add_argument(
     '--filler', action=BooleanOptionalAction, default=True,
     help='Check for filler words')
 PARSER.add_argument(
     '--adverbs', action=BooleanOptionalAction, default=True,
     help='Check for adverbs')
 PARSER.add_argument(
+    '--homophones', action=BooleanOptionalAction, default=False,
+    help='Show every detected homophone')
+PARSER.add_argument(
+    '--weak', action=BooleanOptionalAction, default=False,
+    help='Check for weak words')
+PARSER.add_argument(
     '--lint', action=BooleanOptionalAction, default=False,
     help='Run Proselint on the text')
 PARSER.add_argument(
     '--frequent', action=BooleanOptionalAction, default=False,
-    help='Show the most frequently-used words')
+    help='Show the most frequently used words')
 PARSER.add_argument(
     '--vis-length', action=BooleanOptionalAction, default=False,
     help='Visualize sentence lengths')
@@ -542,10 +549,28 @@ class TextCheck(Text):
             print('{: >6}'.format('(%s)' % (i+1)), char*num)
 
 
+def _reset_args_with_list(args):
+    if args.l is not None:
+        args.spelling = 'spelling' in args.l
+        args.grammar = 'grammar' in args.l
+        args.homophones = 'homophones' in args.l
+        args.cliches = 'cliches' in args.l
+        args.passive = 'passive' in args.l
+        args.nominalizations = 'nominalizations' in args.l
+        args.weak = 'weak' in args.l
+        args.filler = 'filler' in args.l
+        args.adverbs = 'adverbs' in args.l
+        args.lint = 'lint' in args.l
+        args.frequent = 'frequent' in args.l
+        args.vis_length = 'vis_length' in args.l
+    return args
+
+
 def check():
     """Run the program with given arguments."""
     # Import text
     args = PARSER.parse_args()
+    args = _reset_args_with_list(args)
     if args.o is None:
         args.o = '%s_out_%s.txt' % (args.file, datetime.now())
     with open(args.file) as myfile:
@@ -553,29 +578,29 @@ def check():
             ''.join(myfile.readlines()), save_file=args.o, lang=args.d)
 
     # Check everything.
-    if args.spelling:
+    if args.spelling or args.all:
         text.spelling()
-    if args.grammar:
+    if args.grammar or args.all:
         text.grammar()
-    if args.homophones:
+    if args.homophones or args.all:
         text.homophone_check()
-    if args.cliches:
+    if args.cliches or args.all:
         text.cliches()
-    if args.passive:
+    if args.passive or args.all:
         text.passive_voice()
-    if args.nominalizations:
+    if args.nominalizations or args.all:
         text.nominalizations()
-    if args.weak:
+    if args.weak or args.all:
         text.weak_words()
-    if args.filler:
+    if args.filler or args.all:
         text.filler_words()
-    if args.adverbs:
+    if args.adverbs or args.all:
         text.adverbs()
-    if args.lint:
+    if args.lint or args.all:
         text.proselint()
-    if args.frequent:
+    if args.frequent or args.all:
         text.frequent_words()
-    if args.vis_length:
+    if args.vis_length or args.all:
         text.visualize_length()
 
     # Final result
