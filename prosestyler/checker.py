@@ -144,7 +144,7 @@ class TextCheck(Text):
 
         super().__init__(string, save_file)
 
-    def _suggest_toks(self, tokens, indices, suggestions,
+    def _suggest_toks(self, tokens, indices, suggestions, message,
                       can_replace_sent=False):
         """
         Ask the user to provide input on errors or style suggestions.
@@ -153,6 +153,7 @@ class TextCheck(Text):
             tokens (list) - tokens of the sentence in question
             indices (list) - indices of tokens to be replaced
             suggestions (list) - possible suggestions
+            message (str) - error message, if any
 
         Optional arguments:
             can_replace_sent (bool) - should the user have the explicit option
@@ -163,6 +164,9 @@ class TextCheck(Text):
         inds = range(indices[0], indices[-1]+1)
         colors.tokenprint(tokens, inds)
         phrase = ''.join([tokens[i] for i in inds])
+        if message is not None:
+            print()
+            print('REASON:', message)
         print('Possible suggestions for "%s":' % phrase)
 
         # Print list of suggestions, as well as custom options.
@@ -204,7 +208,7 @@ class TextCheck(Text):
 
     def _check_loop(self, error_method):
         for i, sent in enumerate(self._sentences):
-            errors, suggests, ignore_list = error_method(sent)
+            errors, suggests, ignore_list, messages = error_method(sent)
             tmp_sent = sent
             while errors:
                 err = errors[0]
@@ -214,9 +218,10 @@ class TextCheck(Text):
                     ignore_list += [err]
                     errors = errors[1:]
                     suggests = suggests[1:]
+                    messages = messages[1:]
                 else:
                     tmp_sent = Sentence(''.join(new_tokens))
-                    errors, suggests, ignore_list = error_method(
+                    errors, suggests, ignore_list, messages = error_method(
                         tmp_sent, ignore_list)
             self._sentences[i] = tmp_sent
             self._clean()
@@ -241,7 +246,8 @@ class TextCheck(Text):
             if self._dict.check(tok.text) is False and tup not in ignore_list:
                 errors += [tup]
         suggests = [self._dict.suggest(err[0][0]) for err in errors]
-        return errors, suggests, ignore_list
+        messages = [None] * len(errors)
+        return errors, suggests, ignore_list, messages
 
     def _grammar_errors(self, sentence, ignore_list=None):
         errors_gram = self._gram.check(sentence.string)
@@ -253,6 +259,7 @@ class TextCheck(Text):
             ]
         errors = []
         suggests = []
+        messages = []
         if ignore_list is None:
             ignore_list = []
         for err in errors_gram:
@@ -263,7 +270,8 @@ class TextCheck(Text):
             errors += [(toks, ids)]
             errors = [e for e in errors if e not in ignore_list]
             suggests += [err.replacements]
-        return errors, suggests, ignore_list
+            messages += [err.message]
+        return errors, suggests, ignore_list, messages
 
     def _homophone_errors(self, sentence, ignore_list=None):
         errors = []
@@ -278,7 +286,8 @@ class TextCheck(Text):
                         errors += [([tok], [i])]
                         suggests += [homophones]
                         ignore_list += [([h], [i]) for h in other_homs]
-        return errors, suggests, ignore_list
+        messages = [None] * len(errors)
+        return errors, suggests, ignore_list, messages
 
     def _cliche_errors(self, sentence, ignore_list=None):
         errors = []
@@ -298,7 +307,8 @@ class TextCheck(Text):
                 if (toks, ids) not in ignore_list:
                     errors += [(toks, ids)]
                     suggests += [CLICHES[k]]
-        return errors, suggests, ignore_list
+        messages = [None] * len(errors)
+        return errors, suggests, ignore_list, messages
 
     def _passive_errors(self, sentence, ignore_list=None):
         errors = []
@@ -322,7 +332,8 @@ class TextCheck(Text):
             if tup not in ignore_list:
                 errors += [tup]
                 suggests += [[]]
-        return errors, suggests, ignore_list
+        messages = [None] * len(errors)
+        return errors, suggests, ignore_list, messages
 
     def _nominalization_errors(self, sentence, ignore_list=None):
         errors = []
@@ -343,7 +354,8 @@ class TextCheck(Text):
             if denoms and tup not in ignore_list:
                 errors += [tup]
                 suggests += [denoms]
-        return errors, suggests, ignore_list
+        messages = [None] * len(errors)
+        return errors, suggests, ignore_list, messages
 
     def _weak_words_errors(self, sentence, ignore_list=None):
         errors = []
@@ -372,7 +384,8 @@ class TextCheck(Text):
                         or lemma in WEAK_NOUNS:
                     errors += [tup]
                     suggests += [self._synonyms(text)]
-        return errors, suggests, ignore_list
+        messages = [None] * len(errors)
+        return errors, suggests, ignore_list, messages
 
     def _filler_errors(self, sentence, ignore_list=None):
         errors = []
@@ -384,7 +397,8 @@ class TextCheck(Text):
             if tok.lower() in FILLER_WORDS and tup not in ignore_list:
                 errors += [tup]
                 suggests += [['']]
-        return errors, suggests, ignore_list
+        messages = [None] * len(errors)
+        return errors, suggests, ignore_list, messages
 
     def _adverb_errors(self, sentence, ignore_list=None):
         errors = []
@@ -408,16 +422,18 @@ class TextCheck(Text):
                     and tup not in ignore_list:
                 errors += [tup]
                 suggests += [self._synonyms(node.text)]
-        return errors, suggests, ignore_list
+        messages = [None] * len(errors)
+        return errors, suggests, ignore_list, messages
 
     def _proselint_errors(self, sentence, ignore_list=None):
         """Ask Proselint for advice."""
         errors = []
         suggests = []
+        messages = []
         if ignore_list is None:
             ignore_list = []
         linted = proselint.tools.lint(sentence.string)
-        for _, _message, _, _, fromx, tox, _, _, replacements in linted:
+        for _, message, _, _, fromx, tox, _, _, replacements in linted:
             ids = fromx_to_id(fromx, tox, sentence.tokens)
             toks = [sentence.tokens[i] for i in ids]
             if toks[-1] == ' ':
@@ -426,7 +442,8 @@ class TextCheck(Text):
             errors += [(toks, ids)]
             errors = [e for e in errors if e not in ignore_list]
             suggests += [replacements or []]
-        return errors, suggests, ignore_list
+            messages += [message]
+        return errors, suggests, ignore_list, messages
 
     def spelling(self):
         """Run a spell check on the text."""
