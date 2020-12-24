@@ -4,7 +4,7 @@
 The main script.
 
 Classes:
-    Text - fancy text object with loads of stlye checks
+    TextCheck - fancy text object with loads of stlye checks
 
 Variables:
     PARSER (argparse.ArgumentParser) - parse command line arguments
@@ -28,7 +28,7 @@ from .checks.homophones import HOMOPHONE_LIST
 from .checks.nominalizations import nominalize_check, filter_syn_verbs
 from .checks.weak import WEAK_ADJS, WEAK_MODALS, WEAK_NOUNS, WEAK_VERBS
 from . import resources
-from .sentence import Sentence, gen_sent, gen_tokens
+from .sentence import Sentence, Text, gen_sent, gen_tokens
 from .tools import colors
 from .tools.extended_argparse import BooleanOptionalAction
 from .tools.gui import visual_edit
@@ -88,9 +88,11 @@ PARSER.add_argument(
     help='Visualize sentence lengths')
 
 
-class Text():
+class TextCheck(Text):
     """
     A fancy text object which can provide style suggestions.
+
+    Sub-classed from `sentence.Text`.
 
     Instance variables:
         save_file - the file to be saved as the checks are performed
@@ -116,10 +118,6 @@ class Text():
         visualize_length - provide visual cues for sentence length
     """
 
-    def __repr__(self):
-        """Represent self as string."""
-        return self._string
-
     def __init__(self, string, save_file=None, lang='en_US'):
         """
         Initialize `Text`.
@@ -137,30 +135,7 @@ class Text():
         self._gram = language_tool_python.LanguageTool(lang)
         self._thesaurus = Thesaurus(lang)
 
-        # Make all the things.
-        self._string = string.replace('“', '"').replace('”', '"')
-        self._string = self._string.replace('‘', "'").replace('’', "'")
-        self._sentences = [Sentence(x) for x in gen_sent(self._string)]
-        self._tokens = None
-        self._words = None
-        self._tags = None
-        self._clean()  # Also makes tokens, words, tags.
-
-        # Save for the very first time.
-        if save_file is None:
-            save_file = ''.join(self._words[:3]) + \
-                        ' ' + str(datetime.now()) + '.txt'
-        self.save_file = save_file
-        self.save()
-
-    def __getitem__(self, idx):
-        """Return sentence when indexed."""
-        return self.sentences[idx]
-
-    def save(self):
-        """Save the object to file."""
-        with open(self.save_file, 'w') as myfile:
-            myfile.write(self._string)
+        super().__init__(string, save_file)
 
     def _suggest_toks(self, tokens, indices, suggestions,
                       can_replace_sent=False):
@@ -565,52 +540,6 @@ class Text():
                 continue
             num = len([x for x in sent if x != ' ' and x not in punctuation])
             print('{: >6}'.format('(%s)' % (i+1)), char*num)
-    def _clean(self):
-        """Remove unneccesary whitespace."""
-        sents = [s.clean() for s in self._sentences]
-
-        self._string = ' '.join([str(s) for s in sents])
-        self._sentences = sents
-        self._tokens = [t for s in self._sentences for t in s.tokens]
-        self._words = [w for s in self._sentences for w in s.words]
-        self._tags = [t for s in self._sentences for t in s.tags]
-
-    @property
-    def string(self):
-        """
-        Get/set the text string.
-
-        Setting will automatically set sentences/tokens/etc.
-        """
-        return self._string
-
-    @string.setter
-    def string(self, string):
-        self._string = string
-        self._string = self._string.replace('“', '"').replace('”', '"')
-        self._string = self._string.replace('‘', "'").replace('’', "'")
-        self._sentences = gen_sent(self._string)
-        self._clean()
-
-    @property
-    def sentences(self):
-        """Get the sentences. sentences cannot be set."""
-        return self._sentences
-
-    @property
-    def tokens(self):
-        """Get the tokens. tokens cannot be set."""
-        return [s.tokens for s in self._sentences]
-
-    @property
-    def words(self):
-        """Get the words. words cannot be set."""
-        return [s.words for s in self._sentences]
-
-    @property
-    def tags(self):
-        """Get the tags. tags cannot be set."""
-        return [s.tags for s in self._sentences]
 
 
 def check():
@@ -620,7 +549,8 @@ def check():
     if args.o is None:
         args.o = '%s_out_%s.txt' % (args.file, datetime.now())
     with open(args.file) as myfile:
-        text = Text(''.join(myfile.readlines()), save_file=args.o, lang=args.d)
+        text = TextCheck(
+            ''.join(myfile.readlines()), save_file=args.o, lang=args.d)
 
     # Check everything.
     if args.spelling:

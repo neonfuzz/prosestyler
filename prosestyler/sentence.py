@@ -6,6 +6,7 @@ Tools for parsing information at the sentence level.
 Classes:
     TokenizeAndParse - wrapper around spaCy
     Sentence - hold a lot of information about a sentence
+    Text - hold an entire text (multiple sentences)
 
 Functions:
     gen_tokens - generate tokens from a string
@@ -22,6 +23,7 @@ Variables:
 
 
 # pylint: disable=no-name-in-module
+from datetime import datetime
 from string import punctuation
 
 import spacy
@@ -272,3 +274,105 @@ class Sentence():
             self._string = new_string
             self._doc = NLP(self._string)
         return self
+
+
+class Text():
+    """
+    A fancy text object for holding multiple sentences.
+
+    Instance variables:
+        save_file - the file to be saved as the checks are performed
+        sentences - a list of sententces within the text
+        string - a string of the entire text
+        tags - a list of words and their parts of speech tags
+        tokens - a list of tokens
+        words - a list of words
+
+    Methods:
+        save - save the text to a file
+    """
+
+    def __repr__(self):
+        """Represent self as string."""
+        return self._string
+
+    def __init__(self, string, save_file=None):
+        """
+        Initialize `Text`.
+
+        Arguments:
+            string (str) - the text string to be parsed
+
+        Optional arguments:
+            save_file (str) - the output file to be used between each step
+        """
+        self._string = string.replace('“', '"').replace('”', '"')
+        self._string = self._string.replace('‘', "'").replace('’', "'")
+        self._sentences = [Sentence(x) for x in gen_sent(self._string)]
+        self._tokens = None
+        self._words = None
+        self._tags = None
+        self._clean()  # Also makes tokens, words, tags.
+
+        # Save for the very first time.
+        if save_file is None:
+            save_file = ''.join(self._words[:3]) + \
+                        ' ' + str(datetime.now()) + '.txt'
+        self.save_file = save_file
+        self.save()
+
+    def __getitem__(self, idx):
+        """Return sentence when indexed."""
+        return self.sentences[idx]
+
+    def save(self):
+        """Save the object to file."""
+        with open(self.save_file, 'w') as myfile:
+            myfile.write(self._string)
+
+    def _clean(self):
+        """Remove unneccesary whitespace."""
+        sents = [s.clean() for s in self._sentences]
+
+        self._string = ' '.join([str(s) for s in sents])
+        self._sentences = sents
+        self._tokens = [t for s in self._sentences for t in s.tokens]
+        self._words = [w for s in self._sentences for w in s.words]
+        self._tags = [t for s in self._sentences for t in s.tags]
+
+    @property
+    def string(self):
+        """
+        Get/set the text string.
+
+        Setting will automatically set sentences/tokens/etc.
+        """
+        return self._string
+
+    @string.setter
+    def string(self, string):
+        self._string = string
+        self._string = self._string.replace('“', '"').replace('”', '"')
+        self._string = self._string.replace('‘', "'").replace('’', "'")
+        self._sentences = gen_sent(self._string)
+        self._clean()
+
+    @property
+    def sentences(self):
+        """Get the sentences. sentences cannot be set."""
+        return self._sentences
+
+    @property
+    def tokens(self):
+        """Get the tokens. tokens cannot be set."""
+        return [s.tokens for s in self._sentences]
+
+    @property
+    def words(self):
+        """Get the words. words cannot be set."""
+        return [s.words for s in self._sentences]
+
+    @property
+    def tags(self):
+        """Get the tags. tags cannot be set."""
+        return [s.tags for s in self._sentences]
