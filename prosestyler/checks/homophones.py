@@ -40,6 +40,7 @@ HOMOPHONE_LIST = [
     ['it\'s', 'its'],
     ['know', 'no'],
     ['lay', 'lie'],
+    ['loose', 'lose'],
     ['meat', 'meet'],
     ['might', 'mite'],
     ['one', 'won'],
