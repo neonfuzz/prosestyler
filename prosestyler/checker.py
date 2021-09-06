@@ -439,13 +439,17 @@ class TextCheck(Text):
         for _, message, _, _, fromx, tox, _, _, replacements in linted:
             ids = fromx_to_id(fromx, tox, sentence.tokens)
             toks = [sentence.tokens[i] for i in ids]
-            if toks[-1] == ' ':
-                ids = ids[:-1]
-                toks = toks[:-1]
-            errors += [(toks, ids)]
-            errors = [e for e in errors if e not in ignore_list]
-            suggests += [replacements or []]
-            messages += [message]
+            try:
+                if toks[-1] == ' ':
+                    ids = ids[:-1]
+                    toks = toks[:-1]
+            except IndexError:
+                pass
+            else:
+                errors += [(toks, ids)]
+                errors = [e for e in errors if e not in ignore_list]
+                suggests += [replacements or []]
+                messages += [message]
         return errors, suggests, ignore_list, messages
 
     def spelling(self):
