@@ -8,15 +8,13 @@ Usage
 
 ::
 
-    prosestyler_app [-h] [-o outfile] [-d dictionary]
-                    [-l check_name [check_name ...]] [--all]
+    prosestyler_app [-h] [-o outfile] [-d dictionary] [-l check_name [check_name ...]] [--all]
                     [--spelling | --no-spelling] [--grammar | --no-grammar]
                     [--cliches | --no-cliches] [--passive | --no-passive]
-                    [--nominalizations | --no-nominalizations]
-                    [--filler | --no-filler] [--adverbs | --no-adverbs]
-                    [--homophones | --no-homophones] [--weak | --no-weak]
-                    [--lint | --no-lint] [--frequent | --no-frequent]
-                    [--vis-length | --no-vis-length]
+                    [--nominalizations | --no-nominalizations] [--filler | --no-filler]
+                    [--adverbs | --no-adverbs] [--noun_phrases | --no-noun_phrases]
+                    [--homophones | --no-homophones] [--weak | --no-weak] [--lint | --no-lint]
+                    [--frequent | --no-frequent] [--vis-length | --no-vis-length]
                     file
 
 positional arguments:
@@ -46,6 +44,8 @@ optional arguments:
   --filler, --no-filler
                         Check for filler words (default: True)
   --adverbs, --no-adverbs
+                        Check for adverbs (default: True)
+  --noun_phrases, --no-noun_phrases
                         Check for adverbs (default: True)
   --homophones, --no-homophones
                         Show every detected homophone (default: False)

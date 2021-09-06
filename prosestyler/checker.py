@@ -26,6 +26,7 @@ from .checks.cliches import CLICHES
 from .checks.fillers import FILLER_WORDS
 from .checks.homophones import HOMOPHONE_LIST
 from .checks.nominalizations import nominalize_check, filter_syn_verbs
+from .checks.nouns import big_noun_phrases
 from .checks.weak import WEAK_ADJS, WEAK_MODALS, WEAK_NOUNS, WEAK_VERBS
 from . import resources
 from .sentence import Sentence, Text, gen_sent, gen_tokens
@@ -79,6 +80,9 @@ PARSER.add_argument(
     '--adverbs', action=BooleanOptionalAction, default=True,
     help='Check for adverbs')
 PARSER.add_argument(
+    '--noun_phrases', action=BooleanOptionalAction, default=True,
+    help='Check for adverbs')
+PARSER.add_argument(
     '--homophones', action=BooleanOptionalAction, default=False,
     help='Show every detected homophone')
 PARSER.add_argument(
@@ -120,6 +124,7 @@ class TextCheck(Text):
         weak_words - highlight weak words
         filler_words - point out words that may be unneccesary
         adverbs - highlight adverbs
+        noun_phrases - show clunky noun phrases
         proselint - ask Proselint for advice
         frequent_words - list the most-used words
         visualize_length - provide visual cues for sentence length
@@ -428,6 +433,22 @@ class TextCheck(Text):
         messages = [None] * len(errors)
         return errors, suggests, ignore_list, messages
 
+    def _noun_phrase_errors(self, sentence, ignore_list=None):
+        """Detect clunky noun phrases."""
+        errors = []
+        suggests = []
+        if ignore_list is None:
+            ignore_list = []
+        span_start = sentence.nodes[:].start
+        for err in big_noun_phrases(sentence.nodes):
+            toks = list(err)
+            ids = sentence.inds[err.start-span_start:err.end-span_start]
+            tup = (toks, ids)
+            errors += [tup]
+        suggests = [[]] * len(errors)
+        messages = [None] * len(errors)
+        return errors, suggests, ignore_list, messages
+
     def _proselint_errors(self, sentence, ignore_list=None):
         """Ask Proselint for advice."""
         errors = []
@@ -498,6 +519,11 @@ class TextCheck(Text):
         """Find adverbs and verbs, offer better verbs."""
         now_checking_banner('adverbs')
         self._check_loop(self._adverb_errors)
+
+    def noun_phrases(self):
+        """Detect clunky noun phrases."""
+        now_checking_banner('noun-phrases')
+        self._check_loop(self._noun_phrase_errors)
 
     def proselint(self):
         """Ask Proselint for advice."""
@@ -584,6 +610,7 @@ def _reset_args_with_list(args):
         args.weak = 'weak' in args.l
         args.filler = 'filler' in args.l
         args.adverbs = 'adverbs' in args.l
+        args.noun_phrases = 'noun_phrases' in args.l
         args.lint = 'lint' in args.l
         args.frequent = 'frequent' in args.l
         args.vis_length = 'vis_length' in args.l
@@ -620,6 +647,8 @@ def check():
         text.filler_words()
     if args.adverbs or args.all:
         text.adverbs()
+    if args.noun_phrases or args.all:
+        text.noun_phrases()
     if args.lint or args.all:
         text.proselint()
     if args.frequent or args.all:
