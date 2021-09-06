@@ -244,11 +244,7 @@ class TextCheck(Text):
                 continue
             if tok.text == ' ' or tok.text == '\n' or tok.text in punctuation:
                 continue
-            try:
-                tup = ([tok.text], [sentence.inds[tok.i-nodes.start]])
-            except AttributeError:
-                # For the very first sentence, `nodes` might not have `start`
-                tup = ([tok.text], [sentence.inds[tok.i]])
+            tup = ([tok.text], [sentence.inds[tok.i-nodes[:].start]])
             if self._dict.check(tok.text) is False and tup not in ignore_list:
                 errors += [tup]
         suggests = [self._dict.suggest(err[0][0]) for err in errors]
