@@ -20,7 +20,7 @@ from ..sentence import NLP
 NOMINALIZATION_ENDINGS = (
     'ance',
     'cy',
-    'ence'
+    'ence',
     'ing',
     'ment',
     'ness',
