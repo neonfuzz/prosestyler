@@ -1,7 +1,10 @@
 
 
 """
-A list of (lemmatized) cliches and some suggestions for replacements.
+Provide a checker for cliches.
+
+Classes:
+    Cliches - said cliche checker
 
 Variables:
     CLICHES (dict) - lemmatized cliches and suggested replacements
@@ -11,7 +14,50 @@ Variables:
 # Many thanks to powerthesaurus.org and proselint.com
 
 # pylint: disable=too-many-lines
-# Yes, it's a lot, but it's all just dictionary.
+# Yes, it's a lot, but it's mostly just dictionary.
+
+
+from .base_check import BaseCheck
+from ..sentence import gen_tokens
+from ..tools.helper_functions import fromx_to_id
+
+
+class Cliches(BaseCheck):
+    """
+    Check a text's cliches.
+
+    Arguments:
+        text (Text) - the text to check
+
+    Iterates over each Sentence and applies a homophone check.
+    Text is saved and cleaned after each iteration.
+    """
+
+    def __repr__(self):
+        """Represent Cliches with a string."""
+        return 'Cliches'
+
+    def _check_sent(self, sentence, ignore_list=None):
+        errors, suggests, ignore_list, messages = super()._check_sent(
+            sentence, ignore_list)
+
+        lem = ' '.join([x[0] if not x[1].startswith('PRP') else 'prp'
+                        for x in sentence.lemmas
+                        ]).lower()
+
+        for k in CLICHES:
+            if k in lem:
+                fromx = lem.find(k)
+                tox = fromx + len(k)
+                ids = fromx_to_id(fromx, tox, gen_tokens(lem))
+                toks = [sentence.tokens[i] for i in ids]
+                if (toks, ids) not in ignore_list:
+                    errors += [(toks, ids)]
+                    suggests += [CLICHES[k]]
+        messages = [None] * len(errors)
+
+        return errors, suggests, ignore_list, messages
+
 
 CLICHES = {
     '11th hour': ['last minute'],

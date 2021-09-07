@@ -1,11 +1,46 @@
 
 
 """
-Filler words which can usually be outright deleted.
+Provide a checker for filler words.
+
+Classes:
+    Filler - said filler checker
 
 Variables:
     FILLER_WORDS (list) - words which can usually be deleted.
 """
+
+
+from .base_check import BaseCheck
+
+
+class Filler(BaseCheck):
+    """
+    Check a text's use of filler words.
+
+    Arguments:
+        text (Text) - the text to check
+
+    Iterates over each Sentence and applies a homophone check.
+    Text is saved and cleaned after each iteration.
+    """
+
+    def __repr__(self):
+        """Represent Filler with a string."""
+        return 'Filler Words'
+
+    def _check_sent(self, sentence, ignore_list=None):
+        errors, suggests, ignore_list, messages = super()._check_sent(
+            sentence, ignore_list)
+
+        for i, tok in enumerate(sentence.tokens):
+            tup = ([tok], [i])
+            if tok.lower() in FILLER_WORDS and tup not in ignore_list:
+                errors += [tup]
+                suggests += [['']]
+        messages = [None] * len(errors)
+
+        return errors, suggests, ignore_list, messages
 
 
 FILLER_WORDS = [

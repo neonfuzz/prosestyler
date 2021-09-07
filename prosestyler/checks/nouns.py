@@ -2,9 +2,15 @@
 """
 Check for clunky noun phrases.
 
+Classes:
+    Nouns - said noun phrase checker
+
 Functions:
     big_noun_phrases - detect clunky noun phrases
 """
+
+
+from .base_check import BaseCheck
 
 
 def _check_consecutive(span):
@@ -33,3 +39,34 @@ def big_noun_phrases(nodes):
             if _check_long(n)
             or _check_consecutive(n)]
     return noun_phrases
+
+
+class Nouns(BaseCheck):
+    """
+    Check a text's use of big noun phrases.
+
+    Arguments:
+        text (Text) - the text to check
+
+    Iterates over each Sentence and applies a homophone check.
+    Text is saved and cleaned after each iteration.
+    """
+
+    def __repr__(self):
+        """Represent Nouns with a string."""
+        return 'Excessive Noun Phrases'
+
+    def _check_sent(self, sentence, ignore_list=None):
+        errors, suggests, ignore_list, messages = super()._check_sent(
+            sentence, ignore_list)
+
+        span_start = sentence.nodes[:].start
+        for err in big_noun_phrases(sentence.nodes):
+            toks = list(err)
+            ids = sentence.inds[err.start-span_start:err.end-span_start]
+            tup = (toks, ids)
+            errors += [tup]
+        suggests = [[]] * len(errors)
+        messages = [None] * len(errors)
+
+        return errors, suggests, ignore_list, messages

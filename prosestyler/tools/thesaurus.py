@@ -3,11 +3,12 @@
 r"""
 A simple thesaurus using word embeddings fine-tuned on synonym/antonym tasks.
 
-Variables:
-    THESAURUS_FILE (str) - location of the word embeddings
-
 Classes:
     Thesaurus - look up synonyms
+
+Variables:
+    THESAURUS_FILE (str) - location of the word embeddings
+    THESAURUS (Thesaurus) - instantiation of `Thesaurus`
 
 Provided Courtesy of:
 @InProceedings{mrksic:2016:naacl,
@@ -24,14 +25,21 @@ import numpy as np
 from numpy.linalg import norm
 import pandas as pd
 
-from .spellcheck import SpellCheck
 from .. import resources
-from ..checks.weak import WEAK_ADJS, WEAK_NOUNS, WEAK_VERBS
+from ..resources.weak_lists import WEAK_ADJS, WEAK_NOUNS, WEAK_VERBS
 
 
 RESOURCE_PATH = resources.__path__[0]
 THESAURUS_FILE = RESOURCE_PATH + '/counter-fitted-vectors.en.pkl.gz'
 WEAK_WORDS = WEAK_ADJS + WEAK_NOUNS + WEAK_VERBS
+WEAK_WORDS = []
+
+
+def _is_word_good(word):
+    """Filter non-dictionary and weak words."""
+    if word in WEAK_WORDS:
+        return False
+    return True
 
 
 class Thesaurus():
@@ -45,15 +53,8 @@ class Thesaurus():
         get_synonyms - look up synonyms for a word
     """
 
-    def __init__(self, lang='en'):
-        """
-        Initialize Thesaurus.
-
-        Optional Arguments:
-            lang (str) - language; words not in this
-                language will be pruned from results; default 'en'
-        """
-        self._spellcheck = SpellCheck(lang)
+    def __init__(self):
+        """Initialize Thesaurus."""
         self._vecs = None
 
     @property
@@ -63,14 +64,6 @@ class Thesaurus():
             self._vecs = pd.read_pickle(THESAURUS_FILE)
             self._vecs = self._vecs.loc[self._vecs.index.dropna()]
         return self._vecs
-
-    def _is_word_good(self, word):
-        """Filter non-dictionary and weak words."""
-        if word in WEAK_WORDS:
-            return False
-        if self._spellcheck.check(word) is False:
-            return False
-        return True
 
     def get_synonyms(self, word, thresh=1.1):
         """
@@ -98,8 +91,11 @@ class Thesaurus():
         dists = dists[dists < thresh]
         dists.sort_values(inplace=True)
         dists = dists[1:]  # Delete self-lookup
-        # Remove weak words and non-dictionary words.
+        # Remove weak words.
         good_words = pd.Series(
-            dists.index, index=dists.index).apply(self._is_word_good)
+            dists.index, index=dists.index).apply(_is_word_good)
         dists = dists[good_words]
         return dists.index.values
+
+
+THESAURUS = Thesaurus()

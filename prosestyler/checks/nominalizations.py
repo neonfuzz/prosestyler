@@ -1,7 +1,10 @@
 
 
 """
-Detect and correct nominalizations.
+Check for nominalizations.
+
+Classes:
+    Nominalizations - said nominalization checker
 
 Variables:
     NOMINALIZATION_ENDINGS (tuple) - word endings which imply nominalization
@@ -14,7 +17,47 @@ Functions:
 """
 
 
+from .base_check import BaseCheck
 from ..sentence import NLP
+from ..tools.thesaurus import THESAURUS
+
+
+class Nominalizations(BaseCheck):
+    """
+    Check a text's use of nominalizations.
+
+    Arguments:
+        text (Text) - the text to check
+
+    Iterates over each Sentence and applies a homophone check.
+    Text is saved and cleaned after each iteration.
+    """
+
+    def __repr__(self):
+        """Represent Nominalizations with a string."""
+        return 'Nominalizations'
+
+    def _check_sent(self, sentence, ignore_list=None):
+        errors, suggests, ignore_list, messages = super()._check_sent(
+            sentence, ignore_list)
+
+        nouns_lemmas = [
+            (w[0], w[1], sentence.inds[i])
+            for i, w in enumerate(sentence.lemmas) if w[1].startswith('NN')]
+        for noun in nouns_lemmas:
+            should_denom = nominalize_check(noun[0])
+            if should_denom:
+                syns = THESAURUS.get_synonyms(noun[0])
+                denoms = filter_syn_verbs(syns)
+            else:
+                denoms = []
+            tup = ([noun[0]], [noun[2]])
+            if denoms and tup not in ignore_list:
+                errors += [tup]
+                suggests += [denoms]
+        messages = [None] * len(errors)
+
+        return errors, suggests, ignore_list, messages
 
 
 NOMINALIZATION_ENDINGS = (

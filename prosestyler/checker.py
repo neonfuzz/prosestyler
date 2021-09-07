@@ -18,25 +18,25 @@ from datetime import datetime
 from string import punctuation
 
 import argparse
-import language_tool_python  # Grammar Check
 import numpy as np
-import proselint
 
-from .checks.cliches import CLICHES
-from .checks.fillers import FILLER_WORDS
-from .checks.homophones import HOMOPHONE_LIST
-from .checks.nominalizations import nominalize_check, filter_syn_verbs
-from .checks.nouns import big_noun_phrases
-from .checks.weak import WEAK_ADJS, WEAK_MODALS, WEAK_NOUNS, WEAK_VERBS
 from . import resources
-from .sentence import Sentence, Text, gen_sent, gen_tokens
+from .checks.adverbs import Adverbs
+from .checks.cliches import Cliches
+from .checks.fillers import Filler
+from .checks.grammar import Grammar
+from .checks.homophones import Homophones
+from .checks.nominalizations import Nominalizations
+from .checks.nouns import Nouns
+from .checks.passive import Passive
+from .checks.proselint import ProseLinter
+from .checks.spelling import Speller
+from .checks.weak import Weak
+from .sentence import Text
 from .tools import colors
 from .tools.extended_argparse import BooleanOptionalAction
-from .tools.gui import visual_edit
-from .tools.helper_functions import fromx_to_id, now_checking_banner, \
-    print_rows
+from .tools.helper_functions import now_checking_banner
 from .tools.thesaurus import Thesaurus
-from .tools.spellcheck import SpellCheck
 
 
 RESOURCE_PATH = resources.__path__[0]
@@ -107,7 +107,7 @@ class TextCheck(Text):
 
     Instance variables:
         save_file - the file to be saved as the checks are performed
-        sentences - a list of sententces within the text
+        sentences - a list of sentences within the text
         string - a string of the entire text
         tags - a list of words and their parts of speech tags
         tokens - a list of tokens
@@ -142,389 +142,69 @@ class TextCheck(Text):
             lang (str) - the language to be used
                 (not fully implemented, default en_US)
         """
+        # Define checks.
+        self._adverbs = Adverbs()
+        self._cliches = Cliches()
+        self._filler = Filler()
+        self._grammar = Grammar(lang)
+        self._homophones = Homophones()
+        self._nominalizations = Nominalizations()
+        self._nouns = Nouns()
+        self._passive = Passive()
+        self._proselint = ProseLinter()
+        self._speller = Speller(lang)
+        self._weak = Weak()
+
         # Define dictionaries etc.
-        self._dict = SpellCheck(lang)
-        self._gram = language_tool_python.LanguageTool(lang)
-        self._thesaurus = Thesaurus(lang)
+        self._thesaurus = Thesaurus()
 
         super().__init__(string, save_file)
-
-    def _suggest_toks(self, tokens, indices, suggestions, message,
-                      can_replace_sent=False):
-        """
-        Ask the user to provide input on errors or style suggestions.
-
-        Arguments:
-            tokens (list) - tokens of the sentence in question
-            indices (list) - indices of tokens to be replaced
-            suggestions (list) - possible suggestions
-            message (str) - error message, if any
-
-        Optional arguments:
-            can_replace_sent (bool) - should the user have the explicit option
-                of replacing the entire sentence? default `False`
-        """
-        # Print the sentence with the desired token underlined.
-        print()
-        inds = range(indices[0], indices[-1]+1)
-        colors.tokenprint(tokens, inds)
-        phrase = ''.join([tokens[i] for i in inds])
-        if message is not None:
-            print()
-            print('REASON:', message)
-        print('Possible suggestions for "%s":' % phrase)
-
-        # Print list of suggestions, as well as custom options.
-        print_rows(suggestions)
-        print(' (0) Leave be.')
-        if can_replace_sent is True:
-            print('(ss) Edit entire sentence.')
-        print(' (?) Input your own.')
-
-        # Get user input.
-        # If a number, replace with suggestion.
-        # If 0, return sentence as-is.
-        # If 'ss', ask user to replace entire sentence.
-        # Else: return user-input.
-        user_input = input('Your choice: ')
-        try:
-            user_choice = int(user_input)
-            if len(suggestions) >= user_choice > 0:
-                ans = suggestions[user_choice-1]
-                # Replace everything between the first and last tokens.
-                tokens = tokens[:indices[0]] + [ans] + tokens[indices[-1]+1:]
-            elif user_choice != 0:
-                print('\n\n-------------\nINVALID VALUE\n-------------')
-                tokens = self._suggest_toks(
-                    tokens, indices, suggestions, can_replace_sent)
-        except ValueError:
-            if user_input == 'ss':
-                sent = visual_edit(''.join(tokens))
-                tokens = gen_tokens(sent)
-            else:
-                ans = user_input
-                tokens = tokens[:indices[0]] + [ans] + tokens[indices[-1]+1:]
-        return tokens
-
-    def _synonyms(self, word):
-        """Provide a list of synonyms for word."""
-        synonyms = self._thesaurus.get_synonyms(word)
-        return synonyms
-
-    def _check_loop(self, error_method):
-        for i, sent in enumerate(self._sentences):
-            errors, suggests, ignore_list, messages = error_method(sent)
-            tmp_sent = sent
-            while errors:
-                err = errors[0]
-                new_tokens = self._suggest_toks(
-                    # TODO: why is this 1 and not 0??
-                    tmp_sent.tokens, err[1], suggests[0], messages[0], True)
-                if new_tokens == tmp_sent.tokens:
-                    ignore_list += [err]
-                    errors = errors[1:]
-                    suggests = suggests[1:]
-                    messages = messages[1:]
-                else:
-                    tmp_sent = Sentence(''.join(new_tokens))
-                    errors, suggests, ignore_list, messages = error_method(
-                        tmp_sent, ignore_list)
-            self._sentences[i] = tmp_sent
-            self._clean()
-            self.save()
-
-    def _spelling_errors(self, sentence, ignore_list=None):
-        errors = []
-        if ignore_list is None:
-            ignore_list = []
-        nodes = sentence.nodes
-        for tok in nodes:
-            if tok.ent_iob != 2:
-                # If token is part of a named entity, don't spellcheck.
-                continue
-            if tok.text == ' ' or tok.text == '\n' or tok.text in punctuation:
-                continue
-            tup = ([tok.text], [sentence.inds[tok.i-nodes[:].start]])
-            if self._dict.check(tok.text) is False and tup not in ignore_list:
-                errors += [tup]
-        suggests = [self._dict.suggest(err[0][0]) for err in errors]
-        messages = [None] * len(errors)
-        return errors, suggests, ignore_list, messages
-
-    def _grammar_errors(self, sentence, ignore_list=None):
-        errors_gram = self._gram.check(sentence.string)
-        # Don't check for smart quotes
-        errors_gram = [
-            err for err in errors_gram
-            if err.ruleId != 'EN_QUOTES'  # No smartquotes.
-            and not err.ruleId.startswith('MORFOLOGIK')  # No spellcheck.
-            ]
-        errors = []
-        suggests = []
-        messages = []
-        if ignore_list is None:
-            ignore_list = []
-        for err in errors_gram:
-            fromx = err.offset
-            tox = fromx + err.errorLength
-            ids = fromx_to_id(fromx, tox, sentence.tokens)
-            toks = [sentence.tokens[i] for i in ids]
-            errors += [(toks, ids)]
-            # TODO: I think this would mess up suggestion/message
-            #       order if errors wind up in the ignore list.
-            errors = [e for e in errors if e not in ignore_list]
-            suggests += [err.replacements]
-            messages += [err.message]
-        return errors, suggests, ignore_list, messages
-
-    def _homophone_errors(self, sentence, ignore_list=None):
-        errors = []
-        suggests = []
-        if ignore_list is None:
-            ignore_list = []
-        for i, tok in enumerate(sentence.tokens):
-            for homophones in HOMOPHONE_LIST:
-                for hom in homophones:
-                    if hom == tok.lower() and ([tok], [i]) not in ignore_list:
-                        other_homs = [h for h in homophones if h != hom]
-                        errors += [([tok], [i])]
-                        suggests += [homophones]
-                        ignore_list += [([h], [i]) for h in other_homs]
-        messages = [None] * len(errors)
-        return errors, suggests, ignore_list, messages
-
-    def _cliche_errors(self, sentence, ignore_list=None):
-        errors = []
-        suggests = []
-        if ignore_list is None:
-            ignore_list = []
-        lem = ' '.join([x[0] if not x[1].startswith('PRP') else 'prp'
-                        for x in sentence.lemmas
-                        ]).lower()
-
-        for k in CLICHES:
-            if k in lem:
-                fromx = lem.find(k)
-                tox = fromx + len(k)
-                ids = fromx_to_id(fromx, tox, gen_tokens(lem))
-                toks = [sentence.tokens[i] for i in ids]
-                if (toks, ids) not in ignore_list:
-                    errors += [(toks, ids)]
-                    suggests += [CLICHES[k]]
-        messages = [None] * len(errors)
-        return errors, suggests, ignore_list, messages
-
-    def _passive_errors(self, sentence, ignore_list=None):
-        errors = []
-        suggests = []
-        if ignore_list is None:
-            ignore_list = []
-        nodes = sentence.nodes
-        vbns = [n for n in nodes if 'auxpass' in [c.dep_ for c in n.children]]
-        for word in vbns:
-            children = list(word.children)
-            be_verbs = [c for c in children if c.dep_ == 'auxpass']
-            try:
-                ids = [sentence.inds[bv.i-nodes.start] for bv in be_verbs]
-                ids += [sentence.inds[word.i-nodes.start]]
-            except AttributeError:
-                ids = [sentence.inds[bv.i] for bv in be_verbs]
-                ids += [sentence.inds[word.i]]
-            ids.sort()
-            toks = [sentence.tokens[i] for i in ids]
-            tup = (toks, ids)
-            if tup not in ignore_list:
-                errors += [tup]
-                suggests += [[]]
-        messages = [None] * len(errors)
-        return errors, suggests, ignore_list, messages
-
-    def _nominalization_errors(self, sentence, ignore_list=None):
-        errors = []
-        suggests = []
-        if ignore_list is None:
-            ignore_list = []
-        nouns_lemmas = [
-            (w[0], w[1], sentence.inds[i])
-            for i, w in enumerate(sentence.lemmas) if w[1].startswith('NN')]
-        for noun in nouns_lemmas:
-            should_denom = nominalize_check(noun[0])
-            if should_denom:
-                syns = self._thesaurus.get_synonyms(noun[0])
-                denoms = filter_syn_verbs(syns)
-            else:
-                denoms = []
-            tup = ([noun[0]], [noun[2]])
-            if denoms and tup not in ignore_list:
-                errors += [tup]
-                suggests += [denoms]
-        messages = [None] * len(errors)
-        return errors, suggests, ignore_list, messages
-
-    def _weak_words_errors(self, sentence, ignore_list=None):
-        errors = []
-        suggests = []
-        if ignore_list is None:
-            ignore_list = []
-
-        for node in sentence.nodes:
-            text = node.text
-            lemma = node.lemma_
-            pos = node.tag_
-            try:
-                idx = sentence.inds[node.i-sentence.nodes.start]
-            except AttributeError:
-                idx = sentence.inds[node.i]
-            tup = ([text], [idx])
-
-            if tup not in ignore_list:
-                if pos.startswith('V') \
-                        and node.dep_ != 'aux' \
-                        and lemma in WEAK_VERBS:
-                    errors += [tup]
-                    suggests += [self._synonyms(text)]
-                elif lemma in WEAK_ADJS \
-                        or lemma in WEAK_MODALS \
-                        or lemma in WEAK_NOUNS:
-                    errors += [tup]
-                    suggests += [self._synonyms(text)]
-        messages = [None] * len(errors)
-        return errors, suggests, ignore_list, messages
-
-    def _filler_errors(self, sentence, ignore_list=None):
-        errors = []
-        suggests = []
-        if ignore_list is None:
-            ignore_list = []
-        for i, tok in enumerate(sentence.tokens):
-            tup = ([tok], [i])
-            if tok.lower() in FILLER_WORDS and tup not in ignore_list:
-                errors += [tup]
-                suggests += [['']]
-        messages = [None] * len(errors)
-        return errors, suggests, ignore_list, messages
-
-    def _adverb_errors(self, sentence, ignore_list=None):
-        errors = []
-        suggests = []
-        if ignore_list is None:
-            ignore_list = []
-        adv_modified = sorted([n for n in sentence.nodes
-                               if 'advmod' in [c.dep_ for c in n.children]])
-        for node in adv_modified:
-            adv_node_ids = [c.i for c in node.children
-                            if c.dep_ == 'advmod'
-                            and c.text.endswith('ly')]
-            ids = [sentence.inds[i] for i in adv_node_ids]
-            ids += [sentence.inds[node.i]]
-            ids.sort()
-            toks = [sentence.tokens[i] for i in ids]
-            tup = (toks, ids)
-            if adv_node_ids \
-                    and ids[1] - ids[0] <= 5 \
-                    and node.tag_ is not None \
-                    and tup not in ignore_list:
-                errors += [tup]
-                suggests += [self._synonyms(node.text)]
-        messages = [None] * len(errors)
-        return errors, suggests, ignore_list, messages
-
-    def _noun_phrase_errors(self, sentence, ignore_list=None):
-        """Detect clunky noun phrases."""
-        errors = []
-        suggests = []
-        if ignore_list is None:
-            ignore_list = []
-        span_start = sentence.nodes[:].start
-        for err in big_noun_phrases(sentence.nodes):
-            toks = list(err)
-            ids = sentence.inds[err.start-span_start:err.end-span_start]
-            tup = (toks, ids)
-            errors += [tup]
-        suggests = [[]] * len(errors)
-        messages = [None] * len(errors)
-        return errors, suggests, ignore_list, messages
-
-    def _proselint_errors(self, sentence, ignore_list=None):
-        """Ask Proselint for advice."""
-        errors = []
-        suggests = []
-        messages = []
-        if ignore_list is None:
-            ignore_list = []
-        linted = proselint.tools.lint(sentence.string)
-        for _, message, _, _, fromx, tox, _, _, replacements in linted:
-            ids = fromx_to_id(fromx, tox, sentence.tokens)
-            toks = [sentence.tokens[i] for i in ids]
-            try:
-                if toks[-1] == ' ':
-                    ids = ids[:-1]
-                    toks = toks[:-1]
-            except IndexError:
-                pass
-            else:
-                errors += [(toks, ids)]
-                errors = [e for e in errors if e not in ignore_list]
-                suggests += [replacements or []]
-                messages += [message]
-        return errors, suggests, ignore_list, messages
 
     def spelling(self):
         """Run a spell check on the text."""
         # pylint: disable=line-too-long
         # Courtesy of http://www.jpetrie.net/scientific-word-list-for-spell-checkersspelling-dictionaries/
-        now_checking_banner('spelling')
-        self._check_loop(self._spelling_errors)
+        self._speller(self)
 
     def grammar(self):
         """Run a grammar check on the text."""
-        now_checking_banner('grammar')
-        self._check_loop(self._grammar_errors)
+        self._grammar(self)
 
     def homophone_check(self):
         """Point out every single homophone, for good measure."""
-        now_checking_banner('homophones')
-        self._check_loop(self._homophone_errors)
+        self._homophones(self)
 
     def cliches(self):
         """Highlight cliches and offer suggestions."""
-        now_checking_banner('clichés')
-        self._check_loop(self._cliche_errors)
+        self._cliches(self)
 
     def passive_voice(self):
         """Point out instances of passive voice."""
-        now_checking_banner('passive voice')
-        self._check_loop(self._passive_errors)
+        self._passive(self)
 
     def nominalizations(self):
         """Find many nominalizations and suggest stronger verbs."""
-        now_checking_banner('nominalizations')
-        self._check_loop(self._nominalization_errors)
+        self._nominalizations(self)
 
     def weak_words(self):
         """Find weak words and suggest stronger ones."""
-        now_checking_banner('weak words')
-        self._check_loop(self._weak_words_errors)
+        self._weak(self)
 
     def filler_words(self):
         """Point out filler words and offer to delete them."""
-        now_checking_banner('filler words')
-        self._check_loop(self._filler_errors)
+        self._filler(self)
 
     def adverbs(self):
         """Find adverbs and verbs, offer better verbs."""
-        now_checking_banner('adverbs')
-        self._check_loop(self._adverb_errors)
+        self._adverbs(self)
 
     def noun_phrases(self):
         """Detect clunky noun phrases."""
-        now_checking_banner('noun-phrases')
-        self._check_loop(self._noun_phrase_errors)
+        self._nouns(self)
 
     def proselint(self):
         """Ask Proselint for advice."""
-        now_checking_banner('Proselint')
-        self._check_loop(self._proselint_errors)
+        self._proselint(self)
 
     def _ask_user(self, word, freq, close):
         """Ask user if they want to view words in close proximity."""

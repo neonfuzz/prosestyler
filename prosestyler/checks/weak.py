@@ -1,199 +1,59 @@
 
 
 """
-Weak words that could probably use stronger synonyms.
+Check for weak words that could probably use stronger synonyms.
 
-Variables:
-    WEAK_ADJS (list)
-    WEAK_MODALS (list)
-    WEAK_NOUNS (list)
-    WEAK_VERBS (list)
+Classes:
+    Weak - said weak word checker
 """
 
 
-WEAK_ADJS = [
-    'able',
-    'amazing',
-    'any',
-    'bad',
-    'basic',
-    'beautiful',
-    'better',
-    'big',
-    'boring',
-    'cold',
-    'decent',
-    'easy',
-    'effective',
-    'empty',
-    'excellent',
-    'exciting',
-    'far',
-    'fast',
-    'fat',
-    'few',
-    'first',
-    'free',
-    'full',
-    'funny',
-    'good',
-    'great',
-    'happy',
-    'hard',
-    'high',
-    'hot',
-    'hungry',
-    'important',
-    'incredible',
-    'incredibly',
-    'interesting',
-    'kind',
-    'last',
-    'like',
-    'little',
-    'low',
-    'main',
-    'many',
-    'more',
-    'new',
-    'next',
-    'nice',
-    'old',
-    'open',
-    'perfect',
-    'pleasant',
-    'pretty',
-    'quick',
-    'quite',
-    'sad',
-    'second',
-    'shimmering',
-    'short',
-    'skinny',
-    'small',
-    'soft',
-    'surprising',
-    'tall',
-    'terrific',
-    'thick',
-    'thin,'
-    'third',
-    'tired',
-    'truly',
-    'worst',
-    'young',
-    ]
+from .base_check import BaseCheck
+from ..resources.weak_lists import WEAK_ADJS, WEAK_MODALS, WEAK_NOUNS, \
+    WEAK_VERBS
+from ..tools.thesaurus import THESAURUS
 
 
-WEAK_MODALS = [
-    'can',
-    'could',
-    'may',
-    'might',
-    'must',
-    'shall',
-    'should',
-    'would',
-    ]
+class Weak(BaseCheck):
+    """
+    Check a text's use of weak words.
 
+    Arguments:
+        text (Text) - the text to check
 
-WEAK_NOUNS = [
-    'action',
-    'amount',
-    'answer',
-    'area',
-    'aspect',
-    'back',
-    'bottom',
-    'case',
-    'change',
-    'degree',
-    'end',
-    'factor',
-    'front',
-    'interest',
-    'job',
-    'kind',
-    'lot',
-    'part',
-    'side',
-    'sort',
-    'stuff',
-    'thing',
-    'top',
-    'work',
-    ]
+    Iterates over each Sentence and applies a homophone check.
+    Text is saved and cleaned after each iteration.
+    """
 
+    def __repr__(self):
+        """Represent Weak with a string."""
+        return 'Weak Words'
 
-WEAK_VERBS = [
-    'accord',
-    'answer',
-    'ask',
-    'be',
-    'become',
-    'begin',
-    'best',
-    'bring',
-    'call',
-    'can',
-    'cannot',
-    'come',
-    'cry',
-    'cut',
-    'do',
-    'drink',
-    'eat',
-    'fall',
-    'feel',
-    'fill',
-    'find',
-    'gesture',
-    'get',
-    'give',
-    'go',
-    'hate',
-    'have',
-    'help',
-    'hide',
-    'hurry',
-    'hurt',
-    'interest',
-    'keep',
-    'know',
-    'laugh',
-    'leave',
-    'let',
-    'like',
-    'look',
-    'love',
-    'make',
-    'mark',
-    'mean',
-    'move',
-    'need',
-    'plan',
-    'pull',
-    'push',
-    'put',
-    'reach',
-    'realize',
-    'reply',
-    'rise',
-    'run',
-    'save',
-    'say',
-    'see',
-    'show',
-    'start',
-    'take',
-    'talk',
-    'tell',
-    'think',
-    'try',
-    'turn',
-    'understand',
-    'use',
-    'walk',
-    'want',
-    'wonder',
-    ]
+    def _check_sent(self, sentence, ignore_list=None):
+        errors, suggests, ignore_list, messages = super()._check_sent(
+            sentence, ignore_list)
+
+        for node in sentence.nodes:
+            text = node.text
+            lemma = node.lemma_
+            pos = node.tag_
+            try:
+                idx = sentence.inds[node.i-sentence.nodes.start]
+            except AttributeError:
+                idx = sentence.inds[node.i]
+            tup = ([text], [idx])
+
+            if tup not in ignore_list:
+                if pos.startswith('V') \
+                        and node.dep_ != 'aux' \
+                        and lemma in WEAK_VERBS:
+                    errors += [tup]
+                    suggests += [THESAURUS.get_synonyms(text)]
+                elif lemma in WEAK_ADJS \
+                        or lemma in WEAK_MODALS \
+                        or lemma in WEAK_NOUNS:
+                    errors += [tup]
+                    suggests += [THESAURUS.get_synonyms(text)]
+        messages = [None] * len(errors)
+
+        return errors, suggests, ignore_list, messages

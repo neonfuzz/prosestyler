@@ -219,6 +219,10 @@ class Sentence():
         """Return when indexed."""
         return self.words[idx]
 
+    def __setitem__(self, idx, value):
+        """Set a word in place."""
+        self.words[idx] = value
+
     @property
     def string(self):
         """Raw text of the sentence."""
@@ -311,7 +315,7 @@ class Text():
         self._tokens = None
         self._words = None
         self._tags = None
-        self._clean()  # Also makes tokens, words, tags.
+        self.clean()  # Also makes tokens, words, tags.
 
         # Save for the very first time.
         if save_file is None:
@@ -324,6 +328,10 @@ class Text():
         """Return sentence when indexed."""
         return self.sentences[idx]
 
+    def __setitem__(self, idx, value):
+        """Set a sentence in place."""
+        self.sentences[idx] = value
+
     def __len__(self):
         """Return number of sentences."""
         return len(self.sentences)
@@ -333,7 +341,7 @@ class Text():
         with open(self.save_file, 'w') as myfile:
             myfile.write(self._string)
 
-    def _clean(self):
+    def clean(self):
         """Remove unneccesary whitespace."""
         sents = [s.clean() for s in self._sentences]
 
@@ -358,7 +366,7 @@ class Text():
         self._string = self._string.replace('“', '"').replace('”', '"')
         self._string = self._string.replace('‘', "'").replace('’', "'")
         self._sentences = gen_sent(self._string)
-        self._clean()
+        self.clean()
 
     @property
     def sentences(self):
