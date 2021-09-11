@@ -45,7 +45,12 @@ class ProseLinter(BaseCheck):
             else:
                 errors += [(toks, ids)]
                 errors = [e for e in errors if e not in ignore_list]
-                suggests += [replacements or []]
+                if isinstance(replacements, list):
+                    suggests += [replacements]
+                elif replacements:
+                    suggests += [[replacements]]
+                else:
+                    suggests += [[]]
                 messages += [message]
 
         return errors, suggests, ignore_list, messages
