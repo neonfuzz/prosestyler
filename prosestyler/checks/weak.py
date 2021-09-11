@@ -45,7 +45,7 @@ class Weak(BaseCheck):
 
             if tup not in ignore_list:
                 if pos.startswith('V') \
-                        and node.dep_ != 'aux' \
+                        and not node.dep_.startswith('aux') \
                         and lemma in WEAK_VERBS:
                     errors += [tup]
                     suggests += [THESAURUS.get_synonyms(text)]
