@@ -37,4 +37,5 @@ def tokenprint(tokens, indices=None, style=None):
         mystr += ''.join(tokens[index+1:indices[i+1]])
     mystr += style + tokens[indices[-1]] + BORING
     mystr += ''.join(tokens[indices[-1]+1:])
+    mystr = mystr.strip()
     print(mystr)

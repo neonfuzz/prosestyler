@@ -33,12 +33,13 @@ class Adverbs(BaseCheck):
 
         adv_modified = sorted([n for n in sentence.nodes
                                if 'advmod' in [c.dep_ for c in n.children]])
+        first_i = sentence.nodes[0].i
         for node in adv_modified:
-            adv_node_ids = [c.i for c in node.children
+            adv_node_ids = [c.i-first_i for c in node.children
                             if c.dep_ == 'advmod'
                             and c.text.endswith('ly')]
             ids = [sentence.inds[i] for i in adv_node_ids]
-            ids += [sentence.inds[node.i]]
+            ids += [sentence.inds[node.i-first_i]]
             ids.sort()
             toks = [sentence.tokens[i] for i in ids]
             tup = (toks, ids)

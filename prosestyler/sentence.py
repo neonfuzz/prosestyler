@@ -21,9 +21,9 @@ Variables:
     INFIX_RE - infix regex for `TOKENIZER`
 """
 
-
 # pylint: disable=no-name-in-module
 from datetime import datetime
+import re
 from string import punctuation
 
 import spacy
@@ -270,7 +270,7 @@ class Sentence():
 
     def clean(self):
         """Remove unnecessary whitespace."""
-        new_string = self._string.strip()
+        new_string = self._string.strip(' ')
         for i in ',:;.?! ':
             new_string = new_string.replace(' %s' % i, i)
         if new_string != self._string:
@@ -346,6 +346,7 @@ class Text():
         sents = [s.clean() for s in self._sentences]
 
         self._string = ' '.join([str(s) for s in sents])
+        self._string = re.sub(r'\n+\s+', r'\n\n', self._string)
         self._sentences = sents
         self._tokens = [t for s in self._sentences for t in s.tokens]
         self._words = [w for s in self._sentences for w in s.words]

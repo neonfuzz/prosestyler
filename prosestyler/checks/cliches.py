@@ -16,6 +16,8 @@ Variables:
 # pylint: disable=too-many-lines
 # Yes, it's a lot, but it's mostly just dictionary.
 
+import re
+from string import punctuation
 
 from .base_check import BaseCheck
 from ..sentence import gen_tokens
@@ -44,6 +46,9 @@ class Cliches(BaseCheck):
         lem = ' '.join([x[0] if not x[1].startswith('PRP') else 'prp'
                         for x in sentence.lemmas
                         ]).lower()
+
+        regex = rf' ([{punctuation}])'
+        lem = re.sub(regex, r'\1', lem)
 
         for k in CLICHES:
             if k in lem:
