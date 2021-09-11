@@ -27,6 +27,8 @@ setup(
     long_description=read("README.rst"),
 
     packages=find_packages(exclude=('tests',)),
+    package_data={'': ['*pkl.gz', '*.txt']},
+    include_package_data=True,
 
     install_requires=[
         'argparse',
