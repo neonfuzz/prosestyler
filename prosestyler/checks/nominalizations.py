@@ -246,14 +246,19 @@ RANDOM_NOMINALIZATIONS = [
 
 
 DONT_CHECK_LIST = [
+    'anything',
     'creature',
+    'everything',
     'future',
     'geometry',
+    'nothing',
     'possibility',
     'property',
     'reality',
     'simulation',
+    'something',
     'temperature',
+    'thing',
     'velocity',
     ]
 
