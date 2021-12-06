@@ -64,6 +64,7 @@ NOMINALIZATION_ENDINGS = (
     'ance',
     'cy',
     'ence',
+    'ency',
     'ing',
     'ment',
     'ness',
@@ -174,6 +175,7 @@ RANDOM_NOMINALIZATIONS = [
     'mentor',
     'mismatch',
     'murder',
+    'need',
     'object',
     'offset',
     'overlap',
@@ -247,6 +249,7 @@ RANDOM_NOMINALIZATIONS = [
 
 DONT_CHECK_LIST = [
     'anything',
+    'consultant',
     'creature',
     'everything',
     'future',
@@ -255,6 +258,7 @@ DONT_CHECK_LIST = [
     'possibility',
     'property',
     'reality',
+    'research',
     'simulation',
     'something',
     'temperature',
