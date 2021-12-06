@@ -8,13 +8,65 @@ Classes:
 """
 
 
-# Many thanks to powerthesaurus.org and proselint.com
-
-# pylint: disable=too-many-lines
-# Yes, it's a lot, but it's mostly just dictionary.
-
+# pylint: disable=unused-import
+#   `pyinflect` is used, just behind the scenes.
+import pyinflect
 
 from .base_check import BaseCheck
+
+
+SUBJ_OBJ = {
+    'i': 'me',
+    'we': 'us',
+    'he': 'him',
+    'she': 'her',
+    'they': 'them',
+    'who': 'whom',
+    }
+
+
+def _get_subject_chunk(nodes, vbn):
+    try:
+        subj = [c for c in vbn.children if c.dep_.startswith('nsubj')][0]
+        subj_chunk = [nc for nc in nodes.noun_chunks if nc.root == subj][0]
+        return subj_chunk
+    except IndexError:
+        return []
+
+
+def _get_object_chunk(nodes, vbn):
+    try:
+        by_prep = [c for c in vbn.children if c.lower_ == 'by'][0]
+        obj = [c for c in by_prep.children if c.dep_.endswith('obj')][0]
+        obj_chunk = [nc for nc in nodes.noun_chunks if nc.root == obj][0]
+        return obj_chunk
+    except IndexError:
+        return []
+
+
+# TODO: match singular/plural of the (new) subject
+# TODO: future tense isn't at all caught
+def _conjugate(verb, be_verbs):
+    try:
+        conj = verb._.inflect(be_verbs[0].tag_) or verb.lower_
+    except IndexError:
+        conj = verb.lower_
+    return conj
+
+
+def _subject_to_object(subj):
+    if isinstance(subj, list):
+        return '[OBJECT]'
+    return SUBJ_OBJ.get(subj.lower_, subj.text)
+
+
+def _object_to_subject(obj):
+    if isinstance(obj, list):
+        return '[SUBJECT]'
+    subj = {v: k for k, v in SUBJ_OBJ.items()}.get(obj.lower_, obj.text)
+    if subj == 'i':
+        subj = 'I'
+    return subj
 
 
 class Passive(BaseCheck):
@@ -36,23 +88,40 @@ class Passive(BaseCheck):
         errors, suggests, ignore_list, messages = super()._check_sent(
             sentence, ignore_list)
 
-        nodes = sentence.nodes
-        vbns = [n for n in nodes if 'auxpass' in [c.dep_ for c in n.children]]
-        for word in vbns:
-            children = list(word.children)
-            be_verbs = [c for c in children if c.dep_ == 'auxpass']
+        vbns = [n for n in sentence.nodes
+                if 'auxpass' in [c.dep_ for c in n.children]
+                and n.tag_.startswith('V')]
+        for verb in vbns:
+            be_verbs = [c for c in verb.children if c.dep_ == 'auxpass']
+            subj = _get_subject_chunk(sentence.nodes, verb)
+            obj = _get_object_chunk(sentence.nodes, verb)
+
+            # Passive voice involves a lot of tokens.
+            # Let's keep track.
+            raw_ids = [verb.i]
+            raw_ids += [bv.i for bv in be_verbs]
+            raw_ids += [s.i for s in subj]
+            raw_ids += [c.i for c in verb.children if c.lower_ == 'by']
+            raw_ids += [o.i for o in obj]
+            raw_ids.sort()
+
             try:
-                ids = [sentence.inds[bv.i-nodes.start] for bv in be_verbs]
-                ids += [sentence.inds[word.i-nodes.start]]
+                raw_ids = [rid - sentence.nodes.start for rid in raw_ids]
             except AttributeError:
-                ids = [sentence.inds[bv.i] for bv in be_verbs]
-                ids += [sentence.inds[word.i]]
-            ids.sort()
-            toks = [sentence.tokens[i] for i in ids]
-            tup = (toks, ids)
+                pass
+
+            ids = [sentence.inds[i] for i in raw_ids]
+            tup = (
+                [sentence.tokens[i] for i in ids],  # tokens
+                ids)
+
+            # Get suggestion string in order.
+            conj = _conjugate(verb, be_verbs)
+            obj, subj = _subject_to_object(subj), _object_to_subject(obj)
             if tup not in ignore_list:
                 errors += [tup]
-                suggests += [[]]
+                suggests += [[f'{subj} {conj} {obj}']]
+
         messages = [None] * len(errors)
 
         return errors, suggests, ignore_list, messages

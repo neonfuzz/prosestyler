@@ -37,6 +37,7 @@ setup(
         'pandas',
         'proselint',
         'pyenchant',
+        'pyinflect',
         'spacy',
         ],
 
