@@ -17,6 +17,10 @@ Functions:
 """
 
 
+# pylint: disable=unused-import
+#   `pyinflect` is used, just quietly.
+import pyinflect
+
 from .base_check import BaseCheck
 from ..sentence import NLP
 from ..tools.thesaurus import THESAURUS
@@ -41,20 +45,26 @@ class Nominalizations(BaseCheck):
         errors, suggests, ignore_list, messages = super()._check_sent(
             sentence, ignore_list)
 
-        nouns_lemmas = [
-            (w[0], w[1], sentence.inds[i])
-            for i, w in enumerate(sentence.lemmas) if w[1].startswith('NN')]
-        for noun in nouns_lemmas:
-            should_denom = nominalize_check(noun[0])
-            if should_denom:
-                syns = THESAURUS.get_synonyms(noun[0])
-                denoms = filter_syn_verbs(syns)
-            else:
-                denoms = []
-            tup = ([noun[0]], [noun[2]])
-            if denoms and tup not in ignore_list:
+        nom_nouns = [n for n in sentence.nodes
+                     if n.tag_.startswith('NN')
+                     and nominalize_check(n.lemma_)]
+        for noun in nom_nouns:
+            syns = THESAURUS.get_synonyms(noun.text)
+            denoms = filter_syn_verbs(syns)
+
+            raw_ids = [noun.i]
+            raw_ids += [c.i for c in noun.children]
+            try:
+                raw_ids = [i-sentence.nodes.start for i in raw_ids]
+            except AttributeError:
+                pass
+            ids = [sentence.inds[i] for i in raw_ids]
+            ids.sort()
+            tup = ([noun.text, ids])
+            if tup not in ignore_list:
                 errors += [tup]
                 suggests += [denoms]
+
         messages = [None] * len(errors)
 
         return errors, suggests, ignore_list, messages
@@ -133,6 +143,7 @@ RANDOM_NOMINALIZATIONS = [
     'detail',
     'dictate',
     'digest',
+    'disbelief',
     'discard',
     'discharge',
     'discourse',
@@ -278,10 +289,11 @@ def nominalize_check(noun_lemma):
     return should_check
 
 
-def filter_syn_verbs(syns):
-    """Return only verb synonyms."""
+def filter_syn_verbs(syns, tense='VBG'):
+    """Return only verb synonyms, conjugated."""
     docs = [NLP(s) for s in syns]
-    verbs = [d[0].lemma_ for d in docs if d[0].tag_.startswith('V')]
+    verbs = [d[0]._.inflect(tense) for d in docs]
+    verbs = [v for v in verbs if v]
 
     # Remove duplicates while preserving order.
     return_verbs = []
