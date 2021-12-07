@@ -10,6 +10,8 @@ Functions:
 """
 
 from math import ceil
+from pprint import pformat
+import re
 
 
 def fromx_to_id(fromx, tox, tokens):
@@ -36,13 +38,27 @@ def fromx_to_id(fromx, tox, tokens):
     return ids
 
 
-def now_checking_banner(word):
+def pretty_print_prose(string: str, *args, **kwargs):
+    """Print a string to the screen with proper linebreaks."""
+    out = pformat(string, *args, **kwargs)
+    out = re.sub(r'["\']\n ["\']', '\n', out)
+    # Strip parenthesis and quotes from beginning and end.
+    if out[1] == '(':
+        out = out[2:-2]
+    else:
+        out = out[1:-1]
+    print(out)
+
+
+def now_checking_banner(check):
     """Print a pretty banner on the output."""
-    mystr = '---  Now Checking %s!  ---' % word.title()
+    mystr = f'---  Now Checking {str(check).title()}!  ---'
     dashstr = '-' * len(mystr)
     print('\n\n')
     print(dashstr)
     print(mystr)
+    print(dashstr)
+    pretty_print_prose(check.description)
     print(dashstr)
 
 

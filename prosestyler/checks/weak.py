@@ -25,6 +25,14 @@ class Weak(BaseCheck):
     Text is saved and cleaned after each iteration.
     """
 
+    _description = (
+        'Some words are just weak and boring, and make your writing '
+        'sound uninspired. Make heavy use of the thesaurus and bring '
+        'your writing to life. Tip: These suggestions are just that. '
+        "Don't go overboard on fancy jargon or your writing will sound "
+        'pompous. If the original "weak" word is the best fit, by all '
+        'means stick with that one.')
+
     def __repr__(self):
         """Represent Weak with a string."""
         return 'Weak Words'

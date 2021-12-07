@@ -24,6 +24,8 @@ class ProseLinter(BaseCheck):
     Text is saved and cleaned after each iteration.
     """
 
+    _description = 'Some checks from our friends at ProseLint.'
+
     def __repr__(self):
         """Represent ProseLinter with a string."""
         return 'ProseLint'

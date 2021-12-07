@@ -35,6 +35,12 @@ class Cliches(BaseCheck):
     Text is saved and cleaned after each iteration.
     """
 
+    _description = (
+        'Cliches are lazy and make you appear unoriginal in your '
+        'thought. They can also be a communication barrier to an '
+        "international audience. It's better to replace the cliche "
+        'with what you actually mean.')
+
     def __repr__(self):
         """Represent Cliches with a string."""
         return 'Cliches'

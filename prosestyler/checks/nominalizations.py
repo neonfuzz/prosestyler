@@ -37,6 +37,16 @@ class Nominalizations(BaseCheck):
     Text is saved and cleaned after each iteration.
     """
 
+    _description = (
+        'Nominalizations, or "zombie nouns" are tricky little things. '
+        'They are nouns which hide verbs (or the occassional '
+        'adjective). Replacing a nominalization with a verb makes your '
+        'writing more active and easier to read. e.g., "She made a '
+        'decision to stop eating cookies" can become "she decided to '
+        'stop eating cookies," or "the executives worked diligently to '
+        'come to a resolution regarding their tax problem" can become '
+        '"the executives resolved their tax problem."')
+
     def __repr__(self):
         """Represent Nominalizations with a string."""
         return 'Nominalizations'

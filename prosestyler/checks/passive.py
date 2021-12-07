@@ -80,6 +80,12 @@ class Passive(BaseCheck):
     Text is saved and cleaned after each iteration.
     """
 
+    _description = (
+        'Passive voice takes the focus off the person doing the '
+        'action, and makes your writing more impersonal and drab. This '
+        "can be desired if you're writing for a formal audience, "
+        'but even then should be used sparingly.')
+
     def __repr__(self):
         """Represent Passive with a string."""
         return 'Passive Voice'

@@ -23,6 +23,12 @@ class Adverbs(BaseCheck):
     Text is saved and cleaned after each iteration.
     """
 
+    _description = (
+        'Adverbs signal a weak verb. Try replacing both with a more '
+        'descriptive verb. e.g., "He ran really fast" could become "he '
+        'sprinted" or "he dashed." "They walked easily" could become '
+        '"they ambled" or "they glided."')
+
     def __repr__(self):
         """Represent Adverbs with a string."""
         return 'Adverbs'

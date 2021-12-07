@@ -25,6 +25,14 @@ class Filler(BaseCheck):
     Text is saved and cleaned after each iteration.
     """
 
+    _description = (
+        'Some words can be outright deleted without changing your '
+        'meaning. These words slow down the reader and make your '
+        'writing more stilted. There will be a lot of suggestions in '
+        "this check and you'll find you can apply approximately half. "
+        "Don't spend too much time on any individual suggestion, or "
+        'this check will take forever.')
+
     def __repr__(self):
         """Represent Filler with a string."""
         return 'Filler Words'

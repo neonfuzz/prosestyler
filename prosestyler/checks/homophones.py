@@ -25,6 +25,12 @@ class Homophones(BaseCheck):
     Text is saved and cleaned after each iteration.
     """
 
+    _description = (
+        'A lot of words sound similar to other words that mean '
+        'something completely different. This is a brute force check '
+        '(not for the faint of heart) which shows you all possible '
+        'homophones and asks which version you would like to use.')
+
     def __repr__(self):
         """Represent Homophones with a string."""
         return 'Homophones'

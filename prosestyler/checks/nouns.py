@@ -48,9 +48,15 @@ class Nouns(BaseCheck):
     Arguments:
         text (Text) - the text to check
 
-    Iterates over each Sentence and applies a homophone check.
+    Iterates over each Sentence and applies an excessive noun phrase check.
     Text is saved and cleaned after each iteration.
     """
+
+    _description = (
+        'Excessive noun phrases are exactly what they sound like... '
+        'phrases composed of far too many nouns. They are difficult to '
+        'parse and slow down your reader. Try breaking the phrase into '
+        'smaller chunks and spreading them throughout your sentence.')
 
     def __repr__(self):
         """Represent Nouns with a string."""

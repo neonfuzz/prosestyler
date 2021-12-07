@@ -22,6 +22,9 @@ class BaseCheck():
         __repr__
         _check_sent
 
+    Define the following instance variables when sub-classed:
+        _description
+
     Sub-classed docstrings should follow the following format:
 
         <1-line description of checker>
@@ -33,9 +36,16 @@ class BaseCheck():
         Text is saved and cleaned after each iteration.
     """
 
+    _description = ''
+
     def __repr__(self):
         """One- or two-word description of the check."""
         return ''
+
+    @property
+    def description(self) -> str:
+        """How to use the check."""
+        return self._description
 
     def _suggest_toks(self, tokens, indices, suggestions, message,
                       can_replace_sent=False):
@@ -133,7 +143,7 @@ class BaseCheck():
         Iterates over each Sentence and applies `_check_sent`.
         Text is saved and cleaned after each iteration.
         """
-        now_checking_banner(str(self))
+        now_checking_banner(self)
         for i, sent in enumerate(text):
             errors, suggests, ignore_list, messages = self._check_sent(sent)
             tmp_sent = sent
