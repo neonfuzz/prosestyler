@@ -62,13 +62,9 @@ class Nominalizations(BaseCheck):
             syns = THESAURUS.get_synonyms(noun.text)
             denoms = filter_syn_verbs(syns)
 
-            raw_ids = [noun.i]
-            raw_ids += [c.i for c in noun.children]
-            try:
-                raw_ids = [i-sentence.nodes.start for i in raw_ids]
-            except AttributeError:
-                pass
-            ids = [sentence.inds[i] for i in raw_ids]
+            ids = [noun.i]
+            ids += [c.i for c in noun.children]
+            ids = [sentence.inds[i-sentence.nodes[:].start] for i in ids]
             ids.sort()
             tup = ([noun.text, ids])
             if tup not in ignore_list:

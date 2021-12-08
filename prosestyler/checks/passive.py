@@ -104,19 +104,13 @@ class Passive(BaseCheck):
 
             # Passive voice involves a lot of tokens.
             # Let's keep track.
-            raw_ids = [verb.i]
-            raw_ids += [bv.i for bv in be_verbs]
-            raw_ids += [s.i for s in subj]
-            raw_ids += [c.i for c in verb.children if c.lower_ == 'by']
-            raw_ids += [o.i for o in obj]
-            raw_ids.sort()
-
-            try:
-                raw_ids = [rid - sentence.nodes.start for rid in raw_ids]
-            except AttributeError:
-                pass
-
-            ids = [sentence.inds[i] for i in raw_ids]
+            ids = [verb.i]
+            ids += [bv.i for bv in be_verbs]
+            ids += [s.i for s in subj]
+            ids += [c.i for c in verb.children if c.lower_ == 'by']
+            ids += [o.i for o in obj]
+            ids = [sentence.inds[i-sentence.nodes[:].start] for i in ids]
+            ids.sort()
             tup = (
                 [sentence.tokens[i] for i in ids],  # tokens
                 ids)
