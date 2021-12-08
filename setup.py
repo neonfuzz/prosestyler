@@ -31,14 +31,14 @@ setup(
     include_package_data=True,
 
     install_requires=[
-        'argparse',
-        'language-tool-python',
-        'numpy',
-        'pandas',
-        'proselint',
-        'pyenchant',
-        'pyinflect',
-        'spacy',
+        'argparse>=1.4.0',
+        'language-tool-python>=2.4.7',
+        'numpy>=1.21.3',
+        'pandas>=1.1.5',
+        'proselint==0.11',
+        'pyenchant>=3.2.0',
+        'pyinflect>=0.5.1',
+        'spacy>=2.3.5',
         ],
 
     classifiers=[
