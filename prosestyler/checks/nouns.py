@@ -14,9 +14,9 @@ from .base_check import BaseCheck
 
 
 def _check_consecutive(span):
-    """Check for noun phrases with 3+ nouns."""
+    """Check for noun phrases with 4+ nouns."""
     nouns = [t for t in span if t.tag_.startswith('NN')]
-    return len(nouns) >= 3
+    return len(nouns) >= 4
 
 
 def _check_long(span):
