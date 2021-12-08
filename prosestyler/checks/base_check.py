@@ -97,7 +97,7 @@ class BaseCheck():
                     tokens, indices, suggestions, can_replace_sent)
         except ValueError:
             if user_input == 'ss':
-                sent = visual_edit(''.join(tokens))
+                sent = visual_edit(tokens, indices)
                 tokens = gen_tokens(sent)
             else:
                 ans = user_input
