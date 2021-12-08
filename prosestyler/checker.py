@@ -17,6 +17,7 @@ Functions:
 from datetime import datetime
 
 import argparse
+from argparse import BooleanOptionalAction
 
 from . import resources
 from .checks.adverbs import Adverbs
@@ -31,7 +32,6 @@ from .checks.proselint import ProseLinter
 from .checks.spelling import Speller
 from .checks.weak import Weak
 from .sentence import Text
-from .tools.extended_argparse import BooleanOptionalAction
 from .tools.thesaurus import Thesaurus
 
 
