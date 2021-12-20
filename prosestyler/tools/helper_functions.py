@@ -5,6 +5,7 @@ Miscelaneous functionality.
 
 Functions:
     fromx_to_id - get token indices from character indices
+    pretty_print_prose - print long strings of text nicely
     now_checking_banner - pretty banner
     print_rows - print items in a neat, ordered list
 """

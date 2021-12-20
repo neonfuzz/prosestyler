@@ -14,7 +14,6 @@ Usage
                     [--nominalizations | --no-nominalizations] [--filler | --no-filler]
                     [--adverbs | --no-adverbs] [--noun_phrases | --no-noun_phrases]
                     [--homophones | --no-homophones] [--weak | --no-weak] [--lint | --no-lint]
-                    [--frequent | --no-frequent] [--vis-length | --no-vis-length]
                     file
 
 positional arguments:
@@ -28,8 +27,7 @@ optional arguments:
   -o <outfile>          Name of output file (default: <filename>_out_<datetime>)
   -d <dictionary>       Which dictionary to use (default: en_US)
   -l <check_name [check_name ...]>
-                        List of checks to use (overrides all other options, except
-                        --all).
+                        List of checks to use (overrides all other options, except --all).
   --all                 Use ALL checks (overrides all other options, including -l).
   --spelling, --no-spelling
                         Run a spellcheck (default: True)
@@ -51,10 +49,6 @@ optional arguments:
                         Show every detected homophone (default: False)
   --weak, --no-weak     Check for weak words (default: False)
   --lint, --no-lint     Run Proselint on the text (default: False)
-  --frequent, --no-frequent
-                        Show the most frequently used words (default: False)
-  --vis-length, --no-vis-length
-                        Visualize sentence lengths (default: False)
 
 Installation
 ------------
