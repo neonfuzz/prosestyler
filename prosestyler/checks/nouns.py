@@ -1,4 +1,3 @@
-
 """
 Check for clunky noun phrases.
 
@@ -35,9 +34,9 @@ def big_noun_phrases(nodes):
     Returns:
         noun_phrases (list of `Span`s) - clunky noun phrases
     """
-    noun_phrases = [n for n in nodes.noun_chunks
-            if _check_long(n)
-            or _check_consecutive(n)]
+    noun_phrases = [
+        n for n in nodes.noun_chunks if _check_long(n) or _check_consecutive(n)
+    ]
     return noun_phrases
 
 
@@ -56,7 +55,8 @@ class Nouns(BaseCheck):
         'Excessive noun phrases are exactly what they sound like... '
         'phrases composed of far too many nouns. They are difficult to '
         'parse and slow down your reader. Try breaking the phrase into '
-        'smaller chunks and spreading them throughout your sentence.')
+        'smaller chunks and spreading them throughout your sentence.'
+    )
 
     def __repr__(self):
         """Represent Nouns with a string."""
@@ -64,12 +64,13 @@ class Nouns(BaseCheck):
 
     def _check_sent(self, sentence, ignore_list=None):
         errors, suggests, ignore_list, messages = super()._check_sent(
-            sentence, ignore_list)
+            sentence, ignore_list
+        )
 
         span_start = sentence.nodes[:].start
         for err in big_noun_phrases(sentence.nodes):
             toks = list(err)
-            ids = sentence.inds[err.start-span_start:err.end-span_start]
+            ids = sentence.inds[err.start - span_start : err.end - span_start]
             tup = (toks, ids)
             errors += [tup]
         suggests = [[]] * len(errors)

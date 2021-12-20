@@ -1,5 +1,3 @@
-
-
 """
 Miscelaneous functionality.
 
@@ -72,21 +70,21 @@ def print_rows(lis, max_rows=21, cols=3, item_width=18):
     max_items = max_rows * cols
     if len(lis) > max_items:
         lis = lis[:max_items]
-    if len(lis) < 2*cols:
+    if len(lis) < 2 * cols:
         cols = 1
 
     # Make a string template holding each column.
     mystr = '{: >4} {: <%s}' % (item_width) * cols
-    nrows = ceil(len(lis)/cols)
+    nrows = ceil(len(lis) / cols)
     rows = [[]] * nrows
     row_ind = 0
     # Order stuff to read down each column.
     # (rather than across each row).
     for i, j in enumerate(lis):
-        rows[row_ind] = rows[row_ind] + ['(%s)' % (i+1), j]
-        row_ind = (row_ind+1) % nrows
+        rows[row_ind] = rows[row_ind] + ['(%s)' % (i + 1), j]
+        row_ind = (row_ind + 1) % nrows
     while row_ind != 0:
         rows[row_ind] = rows[row_ind] + ['', '']
-        row_ind = (row_ind+1) % nrows
+        row_ind = (row_ind + 1) % nrows
     for row in rows:
         print(mystr.format(*row))

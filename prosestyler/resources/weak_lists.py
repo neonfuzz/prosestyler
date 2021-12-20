@@ -1,5 +1,3 @@
-
-
 """
 Provide lists of weak words.
 
@@ -76,13 +74,13 @@ WEAK_ADJS = [
     'tall',
     'terrific',
     'thick',
-    'thin,'
+    'thin',
     'third',
     'tired',
     'truly',
     'worst',
     'young',
-    ]
+]
 
 
 WEAK_MODALS = [
@@ -94,7 +92,7 @@ WEAK_MODALS = [
     'shall',
     'should',
     'would',
-    ]
+]
 
 
 WEAK_NOUNS = [
@@ -122,7 +120,7 @@ WEAK_NOUNS = [
     'thing',
     'top',
     'work',
-    ]
+]
 
 
 WEAK_VERBS = [
@@ -196,4 +194,4 @@ WEAK_VERBS = [
     'walk',
     'want',
     'wonder',
-    ]
+]

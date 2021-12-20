@@ -1,5 +1,3 @@
-
-
 """
 Provide a checker for filler words.
 
@@ -31,7 +29,8 @@ class Filler(BaseCheck):
         'writing more stilted. There will be a lot of suggestions in '
         "this check and you'll find you can apply approximately half. "
         "Don't spend too much time on any individual suggestion, or "
-        'this check will take forever.')
+        'this check will take forever.'
+    )
 
     def __repr__(self):
         """Represent Filler with a string."""
@@ -39,7 +38,8 @@ class Filler(BaseCheck):
 
     def _check_sent(self, sentence, ignore_list=None):
         errors, suggests, ignore_list, messages = super()._check_sent(
-            sentence, ignore_list)
+            sentence, ignore_list
+        )
 
         for i, tok in enumerate(sentence.tokens):
             tup = ([tok], [i])
@@ -104,13 +104,13 @@ FILLER_WORDS = [
     'from',
     'hence',
     'here',
-    'here\'s',
+    "here's",
     'hereafter',
     'hereby',
     'herein',
     'hereupon',
     'how',
-    'how\'s',
+    "how's",
     'however',
     'indeed',
     'just',
@@ -178,10 +178,10 @@ FILLER_WORDS = [
     'such',
     'than',
     'that',
-    'that\'s',
+    "that's",
     'then',
     'there',
-    'there\'s',
+    "there's",
     'thereafter',
     'thereby',
     'therefore',
@@ -201,13 +201,13 @@ FILLER_WORDS = [
     'very',
     'virtually',
     'well',
-    'what'
+    'what',
     'when',
-    'when\'s',
+    "when's",
     'whence',
     'whenever',
     'where',
-    'where\'s',
+    "where's",
     'whereafter',
     'whereas',
     'whereby',
@@ -218,6 +218,6 @@ FILLER_WORDS = [
     'who',
     'whole',
     'why',
-    'why\'s',
+    "why's",
     'yet',
-    ]
+]

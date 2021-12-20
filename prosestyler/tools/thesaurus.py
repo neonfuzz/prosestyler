@@ -1,5 +1,3 @@
-
-
 r"""
 A simple thesaurus using word embeddings fine-tuned on synonym/antonym tasks.
 
@@ -42,7 +40,7 @@ def _is_word_good(word):
     return True
 
 
-class Thesaurus():
+class Thesaurus:
     """
     Look up synonyms.
 
@@ -92,8 +90,9 @@ class Thesaurus():
         dists.sort_values(inplace=True)
         dists = dists[1:]  # Delete self-lookup
         # Remove weak words.
-        good_words = pd.Series(
-            dists.index, index=dists.index).apply(_is_word_good)
+        good_words = pd.Series(dists.index, index=dists.index).apply(
+            _is_word_good
+        )
         dists = dists[good_words]
         return dists.index.values
 

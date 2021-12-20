@@ -1,5 +1,3 @@
-
-
 """
 Provide a grammar checker.
 
@@ -40,15 +38,17 @@ class Grammar(BaseCheck):
 
     def _check_sent(self, sentence, ignore_list=None):
         errors, suggests, ignore_list, messages = super()._check_sent(
-            sentence, ignore_list)
+            sentence, ignore_list
+        )
 
         errors_gram = self._gram.check(sentence.string)
         # Don't check for smart quotes
         errors_gram = [
-            err for err in errors_gram
+            err
+            for err in errors_gram
             if err.ruleId != 'EN_QUOTES'  # No smartquotes.
             and not err.ruleId.startswith('MORFOLOGIK')  # No spellcheck.
-            ]
+        ]
         for err in errors_gram:
             fromx = err.offset
             tox = fromx + err.errorLength

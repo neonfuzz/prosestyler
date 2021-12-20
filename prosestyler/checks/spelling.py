@@ -1,5 +1,3 @@
-
-
 """
 Provide a spell-checker.
 
@@ -41,18 +39,21 @@ class Speller(BaseCheck):
 
     def _check_sent(self, sentence, ignore_list=None):
         errors, suggests, ignore_list, messages = super()._check_sent(
-            sentence, ignore_list)
+            sentence, ignore_list
+        )
         nodes = sentence.nodes
         for tok in nodes:
             if tok.ent_iob != 2:
                 # If token is part of a named entity, don't spellcheck.
                 continue
-            if tok.text == ' ' \
-                    or tok.text == '\n' \
-                    or tok.text == '\n\n' \
-                    or tok.text in punctuation:
+            if (
+                tok.text == ' '
+                or tok.text == '\n'
+                or tok.text == '\n\n'
+                or tok.text in punctuation
+            ):
                 continue
-            tup = ([tok.text], [sentence.inds[tok.i-nodes[:].start]])
+            tup = ([tok.text], [sentence.inds[tok.i - nodes[:].start]])
             if self._dict.check(tok.text) is False and tup not in ignore_list:
                 errors += [tup]
         suggests = [self._dict.suggest(err[0][0]) for err in errors]

@@ -1,5 +1,3 @@
-
-
 """
 Print in different colors/styles to the command line.
 
@@ -29,13 +27,13 @@ def tokenprint(tokens, indices=None, style=None):
     if style is None:
         style = UNDERLINE
 
-    mystr = ''.join(tokens[:indices[0]])
+    mystr = ''.join(tokens[: indices[0]])
     for i, index in enumerate(indices):
-        if i == len(indices)-1:
+        if i == len(indices) - 1:
             continue
         mystr += style + tokens[index] + BORING
-        mystr += ''.join(tokens[index+1:indices[i+1]])
+        mystr += ''.join(tokens[index + 1 : indices[i + 1]])
     mystr += style + tokens[indices[-1]] + BORING
-    mystr += ''.join(tokens[indices[-1]+1:])
+    mystr += ''.join(tokens[indices[-1] + 1 :])
     mystr = mystr.strip()
     print(mystr)

@@ -1,5 +1,3 @@
-
-
 from . import checks
 from . import checker
 from . import sentence

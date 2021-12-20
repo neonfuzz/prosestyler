@@ -1,5 +1,3 @@
-
-
 """
 GUI functionality.
 
@@ -15,7 +13,7 @@ import tkinter as tk
 from tkinter import ttk
 
 
-class TextEditWindow():
+class TextEditWindow:
     # pylint: disable=too-few-public-methods
     """
     Present a GUI window where the user can edit text.
@@ -53,7 +51,8 @@ class TextEditWindow():
         self._text_box.bind('<Return>', self._go)
         self._text_box.bind('<KP_Enter>', self._go)
         self._text_box.tag_add(
-            tk.SEL, kwargs['select_start'], kwargs['select_end'])
+            tk.SEL, kwargs['select_start'], kwargs['select_end']
+        )
         self._text_box.mark_set(tk.INSERT, kwargs['select_end'])
         self._text_box.focus()
         self._button = ttk.Button(self._master, text='Go', command=self._go)
@@ -102,8 +101,11 @@ def visual_edit(tokens, indices=None, thestyle='clam', **kwargs):
             sel_end -= len(tok)
 
     window = TextEditWindow(
-        master, ''.join(tokens),
-        select_start=f'1.{sel_start}', select_end=f'1.{sel_end}',
-        **kwargs)
+        master,
+        ''.join(tokens),
+        select_start=f'1.{sel_start}',
+        select_end=f'1.{sel_end}',
+        **kwargs,
+    )
     master.mainloop()
     return window.text

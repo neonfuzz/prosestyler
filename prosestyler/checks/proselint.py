@@ -1,4 +1,3 @@
-
 """
 Run a ProseLint on text.
 
@@ -32,7 +31,8 @@ class ProseLinter(BaseCheck):
 
     def _check_sent(self, sentence, ignore_list=None):
         errors, suggests, ignore_list, messages = super()._check_sent(
-            sentence, ignore_list)
+            sentence, ignore_list
+        )
 
         linted = proselint.tools.lint(sentence.string)
         for _, message, _, _, fromx, tox, _, _, replacements in linted:

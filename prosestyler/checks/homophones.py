@@ -1,5 +1,3 @@
-
-
 """
 Provide a checker for frequently-confused homophones.
 
@@ -29,7 +27,8 @@ class Homophones(BaseCheck):
         'A lot of words sound similar to other words that mean '
         'something completely different. This is a brute force check '
         '(not for the faint of heart) which shows you all possible '
-        'homophones and asks which version you would like to use.')
+        'homophones and asks which version you would like to use.'
+    )
 
     def __repr__(self):
         """Represent Homophones with a string."""
@@ -37,7 +36,8 @@ class Homophones(BaseCheck):
 
     def _check_sent(self, sentence, ignore_list=None):
         errors, suggests, ignore_list, messages = super()._check_sent(
-            sentence, ignore_list)
+            sentence, ignore_list
+        )
 
         for i, tok in enumerate(sentence.tokens):
             for homophones in HOMOPHONE_LIST:
@@ -81,7 +81,7 @@ HOMOPHONE_LIST = [
     ['for', 'four'],
     ['hear', 'here'],
     ['hole', 'whole'],
-    ['it\'s', 'its'],
+    ["it's", 'its'],
     ['know', 'no'],
     ['lay', 'lie'],
     ['loose', 'lose'],
@@ -103,7 +103,7 @@ HOMOPHONE_LIST = [
     ['tack', 'tact'],
     ['tail', 'tale'],
     ['than', 'then'],
-    ['their', 'there', 'they\'re'],
+    ['their', 'there', "they're"],
     ['threw', 'through'],
     ['thyme', 'time'],
     ['to', 'too', 'two'],
@@ -115,5 +115,5 @@ HOMOPHONE_LIST = [
     ['wheeled', 'wield'],
     ['which', 'witch'],
     ['whine', 'wine'],
-    ['you\'re', 'your'],
-    ]
+    ["you're", 'your'],
+]

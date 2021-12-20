@@ -1,5 +1,3 @@
-
-
 """
 Check for nominalizations.
 
@@ -45,7 +43,8 @@ class Nominalizations(BaseCheck):
         'decision to stop eating cookies" can become "she decided to '
         'stop eating cookies," or "the executives worked diligently to '
         'come to a resolution regarding their tax problem" can become '
-        '"the executives resolved their tax problem."')
+        '"the executives resolved their tax problem."'
+    )
 
     def __repr__(self):
         """Represent Nominalizations with a string."""
@@ -53,20 +52,23 @@ class Nominalizations(BaseCheck):
 
     def _check_sent(self, sentence, ignore_list=None):
         errors, suggests, ignore_list, messages = super()._check_sent(
-            sentence, ignore_list)
+            sentence, ignore_list
+        )
 
-        nom_nouns = [n for n in sentence.nodes
-                     if n.tag_.startswith('NN')
-                     and nominalize_check(n.lemma_)]
+        nom_nouns = [
+            n
+            for n in sentence.nodes
+            if n.tag_.startswith('NN') and nominalize_check(n.lemma_)
+        ]
         for noun in nom_nouns:
             syns = THESAURUS.get_synonyms(noun.text)
             denoms = filter_syn_verbs(syns)
 
             ids = [noun.i]
             ids += [c.i for c in noun.children]
-            ids = [sentence.inds[i-sentence.nodes[:].start] for i in ids]
+            ids = [sentence.inds[i - sentence.nodes[:].start] for i in ids]
             ids.sort()
-            tup = ([noun.text, ids])
+            tup = tuple([noun.text, ids])
             if tup not in ignore_list:
                 errors += [tup]
                 suggests += [denoms]
@@ -92,7 +94,7 @@ NOMINALIZATION_ENDINGS = (
     'tion',
     'ty',
     'ure',
-    )
+)
 
 
 RANDOM_NOMINALIZATIONS = [
@@ -261,7 +263,7 @@ RANDOM_NOMINALIZATIONS = [
     'uplift',
     'upset',
     'use',
-    ]
+]
 
 
 DONT_CHECK_LIST = [
@@ -281,7 +283,7 @@ DONT_CHECK_LIST = [
     'temperature',
     'thing',
     'velocity',
-    ]
+]
 
 
 def nominalize_check(noun_lemma):

@@ -1,5 +1,3 @@
-
-
 """
 Wrapper around enchant spellcheck for faster intial loading.
 
@@ -16,7 +14,7 @@ from .. import resources
 RESOURCE_PATH = resources.__path__[0]
 
 
-class SpellCheck():
+class SpellCheck:
     """
     Wrap enchant spell check with lazy load.
 
@@ -27,6 +25,7 @@ class SpellCheck():
         check - check word spelling
         suggest - provide spelling suggestions
     """
+
     def __init__(self, lang):
         """
         Initialize SpellCheck.
@@ -42,7 +41,8 @@ class SpellCheck():
         """Get Enchant checker, lazy loaded."""
         if self._checker is None:
             self._checker = enchant.DictWithPWL(
-                self._lang, RESOURCE_PATH + '/scientific_word_list.txt')
+                self._lang, RESOURCE_PATH + '/scientific_word_list.txt'
+            )
         return self._checker
 
     def check(self, *args, **kwargs):

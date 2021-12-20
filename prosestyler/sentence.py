@@ -1,5 +1,3 @@
-
-
 """
 Tools for parsing information at the sentence level.
 
@@ -27,11 +25,18 @@ import re
 from string import punctuation
 
 import spacy
-from spacy.lang.punctuation import TOKENIZER_PREFIXES, TOKENIZER_SUFFIXES, \
-                                   TOKENIZER_INFIXES
+from spacy.lang.punctuation import (
+    TOKENIZER_PREFIXES,
+    TOKENIZER_SUFFIXES,
+    TOKENIZER_INFIXES,
+)
 from spacy.tokenizer import Tokenizer
-from spacy.util import compile_prefix_regex, compile_suffix_regex, \
-                       compile_infix_regex, filter_spans
+from spacy.util import (
+    compile_prefix_regex,
+    compile_suffix_regex,
+    compile_infix_regex,
+    filter_spans,
+)
 
 
 def _custom_sent_boundaries(doc):
@@ -53,14 +58,15 @@ def _custom_sent_boundaries(doc):
     for token in doc[1:-1]:
         if token.text in punctuation:
             doc[token.i].is_sent_start = False
-        if token.text == 'al' \
-                and doc[token.i+1].text == '.' \
-                and doc[token.i-1].text == '.' \
-                and doc[token.i-2].text == 'et':
+        if (
+            token.text == 'al'
+            and doc[token.i + 1].text == '.'
+            and doc[token.i - 1].text == '.'
+            and doc[token.i - 2].text == 'et'
+        ):
             doc[token.i].is_sent_start = False
-        if token.text == 'i.e' \
-                and doc[token.i+1].text == '.':
-            doc[token.i+2].is_sent_start = False
+        if token.text == 'i.e' and doc[token.i + 1].text == '.':
+            doc[token.i + 2].is_sent_start = False
     return doc
 
 
@@ -79,9 +85,11 @@ def _custom_token_boundaries(doc):
     """
     merge_list = []
     for token in doc:
-        if token.text in ['et', 'al', 'i.e', 'e.g'] \
-                and doc[token.i+1].text == '.':
-            merge_list.append(doc[token.i:token.i+2])
+        if (
+            token.text in ['et', 'al', 'i.e', 'e.g']
+            and doc[token.i + 1].text == '.'
+        ):
+            merge_list.append(doc[token.i : token.i + 2])
     merge_list = filter_spans(merge_list)
     with doc.retokenize() as retokenizer:
         for span in merge_list:
@@ -89,7 +97,7 @@ def _custom_token_boundaries(doc):
     return doc
 
 
-class TokenizeAndParse():
+class TokenizeAndParse:
     """
     Lazy-loads the spaCy model and treats contractions as one token.
 
@@ -135,7 +143,7 @@ class TokenizeAndParse():
             prefix_search=prefix_re,
             suffix_search=suffix_re,
             infix_finditer=infix_re,
-            )
+        )
         self._nlp.tokenizer = tokenizer
 
         # Custom sentence and token boundaries.
@@ -180,7 +188,7 @@ def gen_sent(string):
     return list(doc.sents)
 
 
-class Sentence():
+class Sentence:
     """
     A fancy text object for holding one sentence at a time.
 
@@ -279,7 +287,7 @@ class Sentence():
         return self
 
 
-class Text():
+class Text:
     """
     A fancy text object for holding multiple sentences.
 
@@ -319,8 +327,9 @@ class Text():
 
         # Save for the very first time.
         if save_file is None:
-            save_file = ''.join(self._words[:3]) + \
-                        ' ' + str(datetime.now()) + '.txt'
+            save_file = (
+                ''.join(self._words[:3]) + ' ' + str(datetime.now()) + '.txt'
+            )
         self.save_file = save_file
         self.save()
 

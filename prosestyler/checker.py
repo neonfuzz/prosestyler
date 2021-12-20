@@ -1,5 +1,3 @@
-
-
 """
 The main script.
 
@@ -39,54 +37,100 @@ RESOURCE_PATH = resources.__path__[0]
 
 
 PARSER = argparse.ArgumentParser(
-    description='Perform a deep grammar and style check.')
+    description='Perform a deep grammar and style check.'
+)
 PARSER.add_argument('file', help='The file to be analyzed.')
-PARSER.add_argument('-o', type=str, metavar='outfile',
-                    help='Name of output file ' \
-                         '(default: <filename>_out_<datetime>)')
 PARSER.add_argument(
-    '-d', default='en_US', type=str, metavar='dictionary',
-    help='Which dictionary to use (default: en_US)')
+    '-o',
+    type=str,
+    metavar='outfile',
+    help='Name of output file ' '(default: <filename>_out_<datetime>)',
+)
 PARSER.add_argument(
-    '-l', type=str, nargs='+', metavar='check_name',
-    help='List of checks to use (overrides all other options, except --all).'
-    )
+    '-d',
+    default='en_US',
+    type=str,
+    metavar='dictionary',
+    help='Which dictionary to use (default: en_US)',
+)
 PARSER.add_argument(
-    '--all', action='store_true',
-    help='Use ALL checks (overrides all other options, including -l).')
+    '-l',
+    type=str,
+    nargs='+',
+    metavar='check_name',
+    help='List of checks to use (overrides all other options, except --all).',
+)
 PARSER.add_argument(
-    '--spelling', action=BooleanOptionalAction, default=True,
-    help='Run a spellcheck')
+    '--all',
+    action='store_true',
+    help='Use ALL checks (overrides all other options, including -l).',
+)
 PARSER.add_argument(
-    '--grammar', action=BooleanOptionalAction, default=True,
-    help='Run a grammar check')
+    '--spelling',
+    action=BooleanOptionalAction,
+    default=True,
+    help='Run a spellcheck',
+)
 PARSER.add_argument(
-    '--cliches', action=BooleanOptionalAction, default=True,
-    help='Check for cliches')
+    '--grammar',
+    action=BooleanOptionalAction,
+    default=True,
+    help='Run a grammar check',
+)
 PARSER.add_argument(
-    '--passive', action=BooleanOptionalAction, default=True,
-    help='Check for passive voice')
+    '--cliches',
+    action=BooleanOptionalAction,
+    default=True,
+    help='Check for cliches',
+)
 PARSER.add_argument(
-    '--nominalizations', action=BooleanOptionalAction, default=True,
-    help='Check for nominalizations')
+    '--passive',
+    action=BooleanOptionalAction,
+    default=True,
+    help='Check for passive voice',
+)
 PARSER.add_argument(
-    '--filler', action=BooleanOptionalAction, default=True,
-    help='Check for filler words')
+    '--nominalizations',
+    action=BooleanOptionalAction,
+    default=True,
+    help='Check for nominalizations',
+)
 PARSER.add_argument(
-    '--adverbs', action=BooleanOptionalAction, default=True,
-    help='Check for adverbs')
+    '--filler',
+    action=BooleanOptionalAction,
+    default=True,
+    help='Check for filler words',
+)
 PARSER.add_argument(
-    '--noun_phrases', action=BooleanOptionalAction, default=True,
-    help='Check for adverbs')
+    '--adverbs',
+    action=BooleanOptionalAction,
+    default=True,
+    help='Check for adverbs',
+)
 PARSER.add_argument(
-    '--homophones', action=BooleanOptionalAction, default=False,
-    help='Show every detected homophone')
+    '--noun_phrases',
+    action=BooleanOptionalAction,
+    default=True,
+    help='Check for adverbs',
+)
 PARSER.add_argument(
-    '--weak', action=BooleanOptionalAction, default=False,
-    help='Check for weak words')
+    '--homophones',
+    action=BooleanOptionalAction,
+    default=False,
+    help='Show every detected homophone',
+)
 PARSER.add_argument(
-    '--lint', action=BooleanOptionalAction, default=False,
-    help='Run Proselint on the text')
+    '--weak',
+    action=BooleanOptionalAction,
+    default=False,
+    help='Check for weak words',
+)
+PARSER.add_argument(
+    '--lint',
+    action=BooleanOptionalAction,
+    default=False,
+    help='Run Proselint on the text',
+)
 
 
 class TextCheck(Text):
@@ -194,17 +238,6 @@ class TextCheck(Text):
         """Ask Proselint for advice."""
         self._proselint(self)
 
-    def _ask_user(self, word, freq, close):
-        """Ask user if they want to view words in close proximity."""
-        nwords = len([w for sentence in self.words for w in sentence])
-        print("'%s' appeard %s times (%.02f%%)." % (
-            word, freq, freq/nwords*100))
-        ans = input(
-            'Would you like to view occurances in proximity? (%s) ' % close)
-        while not ans:
-            ans = input('Sorry, try again: ')
-        return ans[0].lower()
-
 
 def _reset_args_with_list(args):
     if args.l is not None:
@@ -231,7 +264,8 @@ def check():
         args.o = '%s_out_%s.txt' % (args.file, datetime.now())
     with open(args.file) as myfile:
         text = TextCheck(
-            ''.join(myfile.readlines()), save_file=args.o, lang=args.d)
+            ''.join(myfile.readlines()), save_file=args.o, lang=args.d
+        )
 
     # Check everything.
     if args.spelling or args.all:
