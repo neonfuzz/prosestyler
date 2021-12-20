@@ -18,7 +18,7 @@ def read(filename):
 
 setup(
     name="prosestyler",
-    version="0.1.0",
+    version="0.2",
     license='MIT',
 
     author="neonfuzz",
