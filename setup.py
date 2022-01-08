@@ -20,7 +20,7 @@ def read(filename):
 
 setup(
     name="prosestyler",
-    version="0.2",
+    version="0.2.1",
     license='MIT',
     author="neonfuzz",
     description="An interactive grammar and style tool.",
