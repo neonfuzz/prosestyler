@@ -36,7 +36,7 @@ setup(
         'proselint==0.11',
         'pyenchant>=3.2.0',
         'pyinflect>=0.5.1',
-        'spacy>=2.3.5',
+        'spacy>=3.2.1',
     ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',

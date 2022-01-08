@@ -39,6 +39,7 @@ from spacy.util import (
 )
 
 
+@spacy.Language.component('_custom_sent_boundaries')
 def _custom_sent_boundaries(doc):
     """
     Create custom sentence tokenizing boundaries for spaCy.
@@ -70,6 +71,7 @@ def _custom_sent_boundaries(doc):
     return doc
 
 
+@spacy.Language.component('_custom_token_boundaries')
 def _custom_token_boundaries(doc):
     """
     Create custom token boundaries that keep abbreviations together.
@@ -147,8 +149,8 @@ class TokenizeAndParse:
         self._nlp.tokenizer = tokenizer
 
         # Custom sentence and token boundaries.
-        self._nlp.add_pipe(_custom_sent_boundaries, before='parser')
-        self._nlp.add_pipe(_custom_token_boundaries, before='parser')
+        self._nlp.add_pipe('_custom_sent_boundaries', before='parser')
+        self._nlp.add_pipe('_custom_token_boundaries', before='parser')
 
     @property
     def nlp(self):
