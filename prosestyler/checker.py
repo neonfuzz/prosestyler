@@ -37,99 +37,99 @@ RESOURCE_PATH = resources.__path__[0]
 
 
 PARSER = argparse.ArgumentParser(
-    description='Perform a deep grammar and style check.'
+    description="Perform a deep grammar and style check."
 )
-PARSER.add_argument('file', help='The file to be analyzed.')
+PARSER.add_argument("file", help="The file to be analyzed.")
 PARSER.add_argument(
-    '-o',
+    "-o",
     type=str,
-    metavar='outfile',
-    help='Name of output file ' '(default: <filename>_out_<datetime>)',
+    metavar="outfile",
+    help="Name of output file " "(default: <filename>_out_<datetime>)",
 )
 PARSER.add_argument(
-    '-d',
-    default='en_US',
+    "-d",
+    default="en_US",
     type=str,
-    metavar='dictionary',
-    help='Which dictionary to use (default: en_US)',
+    metavar="dictionary",
+    help="Which dictionary to use (default: en_US)",
 )
 PARSER.add_argument(
-    '-l',
+    "-l",
     type=str,
-    nargs='+',
-    metavar='check_name',
-    help='List of checks to use (overrides all other options, except --all).',
+    nargs="+",
+    metavar="check_name",
+    help="List of checks to use (overrides all other options, except --all).",
 )
 PARSER.add_argument(
-    '--all',
-    action='store_true',
-    help='Use ALL checks (overrides all other options, including -l).',
+    "--all",
+    action="store_true",
+    help="Use ALL checks (overrides all other options, including -l).",
 )
 PARSER.add_argument(
-    '--spelling',
+    "--spelling",
     action=BooleanOptionalAction,
     default=True,
-    help='Run a spellcheck',
+    help="Run a spellcheck",
 )
 PARSER.add_argument(
-    '--grammar',
+    "--grammar",
     action=BooleanOptionalAction,
     default=True,
-    help='Run a grammar check',
+    help="Run a grammar check",
 )
 PARSER.add_argument(
-    '--cliches',
+    "--cliches",
     action=BooleanOptionalAction,
     default=True,
-    help='Check for cliches',
+    help="Check for cliches",
 )
 PARSER.add_argument(
-    '--passive',
+    "--passive",
     action=BooleanOptionalAction,
     default=True,
-    help='Check for passive voice',
+    help="Check for passive voice",
 )
 PARSER.add_argument(
-    '--nominalizations',
+    "--nominalizations",
     action=BooleanOptionalAction,
     default=True,
-    help='Check for nominalizations',
+    help="Check for nominalizations",
 )
 PARSER.add_argument(
-    '--filler',
+    "--filler",
     action=BooleanOptionalAction,
     default=True,
-    help='Check for filler words',
+    help="Check for filler words",
 )
 PARSER.add_argument(
-    '--adverbs',
+    "--adverbs",
     action=BooleanOptionalAction,
     default=True,
-    help='Check for adverbs',
+    help="Check for adverbs",
 )
 PARSER.add_argument(
-    '--noun_phrases',
+    "--noun_phrases",
     action=BooleanOptionalAction,
     default=True,
-    help='Check for adverbs',
+    help="Check for adverbs",
 )
 PARSER.add_argument(
-    '--homophones',
+    "--homophones",
     action=BooleanOptionalAction,
     default=False,
-    help='Show every detected homophone',
+    help="Show every detected homophone",
 )
 PARSER.add_argument(
-    '--weak',
+    "--weak",
     action=BooleanOptionalAction,
     default=False,
-    help='Check for weak words',
+    help="Check for weak words",
 )
 PARSER.add_argument(
-    '--lint',
+    "--lint",
     action=BooleanOptionalAction,
     default=False,
-    help='Run Proselint on the text',
+    help="Run Proselint on the text",
 )
 
 
@@ -162,7 +162,7 @@ class TextCheck(Text):
         proselint - ask Proselint for advice
     """
 
-    def __init__(self, string, save_file=None, lang='en_US'):
+    def __init__(self, string, save_file=None, lang="en_US"):
         """
         Initialize `Text`.
 
@@ -241,17 +241,17 @@ class TextCheck(Text):
 
 def _reset_args_with_list(args):
     if args.l is not None:
-        args.spelling = 'spelling' in args.l
-        args.grammar = 'grammar' in args.l
-        args.homophones = 'homophones' in args.l
-        args.cliches = 'cliches' in args.l
-        args.passive = 'passive' in args.l
-        args.nominalizations = 'nominalizations' in args.l
-        args.weak = 'weak' in args.l
-        args.filler = 'filler' in args.l
-        args.adverbs = 'adverbs' in args.l
-        args.noun_phrases = 'noun_phrases' in args.l
-        args.lint = 'lint' in args.l
+        args.spelling = "spelling" in args.l
+        args.grammar = "grammar" in args.l
+        args.homophones = "homophones" in args.l
+        args.cliches = "cliches" in args.l
+        args.passive = "passive" in args.l
+        args.nominalizations = "nominalizations" in args.l
+        args.weak = "weak" in args.l
+        args.filler = "filler" in args.l
+        args.adverbs = "adverbs" in args.l
+        args.noun_phrases = "noun_phrases" in args.l
+        args.lint = "lint" in args.l
     return args
 
 
@@ -261,10 +261,10 @@ def check():
     args = PARSER.parse_args()
     args = _reset_args_with_list(args)
     if args.o is None:
-        args.o = '%s_out_%s.txt' % (args.file, datetime.now())
+        args.o = "%s_out_%s.txt" % (args.file, datetime.now())
     with open(args.file) as myfile:
         text = TextCheck(
-            ''.join(myfile.readlines()), save_file=args.o, lang=args.d
+            "".join(myfile.readlines()), save_file=args.o, lang=args.d
         )
 
     # Check everything.
@@ -292,6 +292,6 @@ def check():
         text.proselint()
 
     # Final result
-    print('\n\n%s' % text.string)
+    print("\n\n%s" % text.string)
 
     text.save()

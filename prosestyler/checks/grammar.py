@@ -22,7 +22,7 @@ class Grammar(BaseCheck):
     Text is saved and cleaned after each iteration.
     """
 
-    def __init__(self, lang='en_US'):
+    def __init__(self, lang="en_US"):
         """
         Initialize Grammar.
 
@@ -34,7 +34,7 @@ class Grammar(BaseCheck):
 
     def __repr__(self):
         """Represent Grammar with a string."""
-        return 'Grammar'
+        return "Grammar"
 
     def _check_sent(self, sentence, ignore_list=None):
         errors, suggests, ignore_list, messages = super()._check_sent(
@@ -46,8 +46,8 @@ class Grammar(BaseCheck):
         errors_gram = [
             err
             for err in errors_gram
-            if err.ruleId != 'EN_QUOTES'  # No smartquotes.
-            and not err.ruleId.startswith('MORFOLOGIK')  # No spellcheck.
+            if err.ruleId != "EN_QUOTES"  # No smartquotes.
+            and not err.ruleId.startswith("MORFOLOGIK")  # No spellcheck.
         ]
         for err in errors_gram:
             fromx = err.offset

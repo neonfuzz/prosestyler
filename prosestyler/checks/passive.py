@@ -20,33 +20,33 @@ from .base_check import BaseCheck
 
 
 SUBJ_OBJ = {
-    'i': 'me',
-    'we': 'us',
-    'he': 'him',
-    'she': 'her',
-    'they': 'them',
-    'who': 'whom',
+    "i": "me",
+    "we": "us",
+    "he": "him",
+    "she": "her",
+    "they": "them",
+    "who": "whom",
 }
 
 
 def _is_proper(obj):
     if not obj:
         return True
-    return obj.root.pos_ == 'PROPN'
+    return obj.root.pos_ == "PROPN"
 
 
 def _subj_to_obj(subj):
     if isinstance(subj, list):
-        return '[OBJECT]'
+        return "[OBJECT]"
     return SUBJ_OBJ.get(subj.lower_, subj.text)
 
 
 def _obj_to_subj(obj):
     if isinstance(obj, list):
-        return '[SUBJECT]'
+        return "[SUBJECT]"
     subj = {v: k for k, v in SUBJ_OBJ.items()}.get(obj.lower_, obj.text)
-    if subj == 'i':
-        subj = 'I'
+    if subj == "i":
+        subj = "I"
     return subj
 
 
@@ -79,27 +79,27 @@ class PassiveClause:
         self.nodes = nodes
         self.verb = verb
         self.aux = [
-            c for c in self.verb.children if c.dep_ in ('aux', 'advmod')
+            c for c in self.verb.children if c.dep_ in ("aux", "advmod")
         ]
-        self.be_verbs = [c for c in verb.children if c.dep_ == 'auxpass']
+        self.be_verbs = [c for c in verb.children if c.dep_ == "auxpass"]
         self.subj = self._get_subject_chunk()
         self.dobj = self._get_object_chunk()
-        self.iobj = self._get_object_chunk('to')
+        self.iobj = self._get_object_chunk("to")
 
     def __repr__(self):
         """Represent PassiveClause."""
         return (
-            f'{self.subj} {self.be_verbs} {self.aux} {self.verb} '
-            f'{{by}} {self.dobj} {{to}} {self.iobj}'
+            f"{self.subj} {self.be_verbs} {self.aux} {self.verb} "
+            f"{{by}} {self.dobj} {{to}} {self.iobj}"
         )
 
     def _get_subject_chunk(self):
         try:
             subj = [
-                c for c in self.verb.children if c.dep_.startswith('nsubj')
+                c for c in self.verb.children if c.dep_.startswith("nsubj")
             ]
             subj = subj or [
-                c for c in self.nodes if c.dep_.startswith('nsubj')
+                c for c in self.nodes if c.dep_.startswith("nsubj")
             ]
             subj = subj[0]
             subj_chunk = [
@@ -109,12 +109,12 @@ class PassiveClause:
         except IndexError:
             return []
 
-    def _get_object_chunk(self, prep='by'):
+    def _get_object_chunk(self, prep="by"):
         try:
             adp = [c for c in self.verb.children if c.lower_ == prep]
             adp = adp or [c for c in self.nodes if c.lower_ == prep]
             adp = adp[0]
-            obj = [c for c in adp.children if c.dep_.endswith('obj')][0]
+            obj = [c for c in adp.children if c.dep_.endswith("obj")][0]
             obj_chunk = [
                 nc for nc in self.nodes.noun_chunks if nc.root == obj
             ][0]
@@ -128,19 +128,19 @@ class PassiveClause:
             # Match tense of auxpass "be" verb.
             tag = self.be_verbs[0].tag_
             # Match plurality of subject.
-            if subj and subj.root.tag_.endswith('S'):
-                if tag == 'VBZ':
-                    tag = 'VBP'
+            if subj and subj.root.tag_.endswith("S"):
+                if tag == "VBZ":
+                    tag = "VBP"
                 for i, tok in enumerate(aux):
-                    if tok.tag_ == 'VBZ':
-                        aux[i] = tok._.inflect('VBP', 1)
-            elif subj and tag == 'VBP':
-                tag = 'VBZ'
+                    if tok.tag_ == "VBZ":
+                        aux[i] = tok._.inflect("VBP", 1)
+            elif subj and tag == "VBP":
+                tag = "VBZ"
             # Conjugate.
             conj = self.verb._.inflect(tag) or self.verb.lower_
         except IndexError:
             conj = self.verb.lower_
-        return ' '.join([str(a) for a in aux] + [conj])
+        return " ".join([str(a) for a in aux] + [conj])
 
     @property
     def ids(self):
@@ -149,7 +149,7 @@ class PassiveClause:
         ids += [a.i for a in self.aux]
         ids += [bv.i for bv in self.be_verbs]
         ids += [s.i for s in self.subj]
-        ids += [c.i for c in self.verb.children if c.lower_ == 'by']
+        ids += [c.i for c in self.verb.children if c.lower_ == "by"]
         ids += [o.i for o in self.dobj]
         ids += [o.i for o in self.iobj]
         ids.sort()
@@ -179,7 +179,7 @@ class PassiveClause:
         if not is_sent_start and not subj_proper:
             subj = subj.lower()
         if is_sent_start and subj and subj == subj.lower():
-            subj = ' '.join(
+            subj = " ".join(
                 [
                     tok.title() if i == 0 else tok
                     for i, tok in enumerate(subj.split())
@@ -189,9 +189,9 @@ class PassiveClause:
             dobj = dobj.lower()
 
         # Formulate and return suggestions.
-        ret = [f'{subj} {conj} {dobj}']
+        ret = [f"{subj} {conj} {dobj}"]
         if self.iobj:
-            ret.append(f'{subj} {conj} {dobj} to {self.iobj}')
+            ret.append(f"{subj} {conj} {dobj} to {self.iobj}")
         return ret
 
 
@@ -207,15 +207,15 @@ class Passive(BaseCheck):
     """
 
     _description = (
-        'Passive voice takes the focus off the person doing the '
-        'action, and makes your writing more impersonal and drab. This '
+        "Passive voice takes the focus off the person doing the "
+        "action, and makes your writing more impersonal and drab. This "
         "can be desired if you're writing for a formal audience, "
-        'but even then should be used sparingly.'
+        "but even then should be used sparingly."
     )
 
     def __repr__(self):
         """Represent Passive with a string."""
-        return 'Passive Voice'
+        return "Passive Voice"
 
     def _check_sent(self, sentence, ignore_list=None):
         errors, suggests, ignore_list, messages = super()._check_sent(
@@ -225,8 +225,8 @@ class Passive(BaseCheck):
         vbns = [
             n
             for n in sentence.nodes
-            if 'auxpass' in [c.dep_ for c in n.children]
-            and n.tag_.startswith('V')
+            if "auxpass" in [c.dep_ for c in n.children]
+            and n.tag_.startswith("V")
         ]
         for verb in vbns:
             clause = PassiveClause(sentence.nodes, verb)

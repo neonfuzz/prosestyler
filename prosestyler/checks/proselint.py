@@ -23,11 +23,11 @@ class ProseLinter(BaseCheck):
     Text is saved and cleaned after each iteration.
     """
 
-    _description = 'Some checks from our friends at ProseLint.'
+    _description = "Some checks from our friends at ProseLint."
 
     def __repr__(self):
         """Represent ProseLinter with a string."""
-        return 'ProseLint'
+        return "ProseLint"
 
     def _check_sent(self, sentence, ignore_list=None):
         errors, suggests, ignore_list, messages = super()._check_sent(
@@ -39,7 +39,7 @@ class ProseLinter(BaseCheck):
             ids = fromx_to_id(fromx, tox, sentence.tokens)
             toks = [sentence.tokens[i] for i in ids]
             try:
-                if toks[-1] == ' ':
+                if toks[-1] == " ":
                     ids = ids[:-1]
                     toks = toks[:-1]
             except IndexError:

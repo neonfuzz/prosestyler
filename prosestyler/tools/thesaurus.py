@@ -28,7 +28,7 @@ from ..resources.weak_lists import WEAK_ADJS, WEAK_NOUNS, WEAK_VERBS
 
 
 RESOURCE_PATH = resources.__path__[0]
-THESAURUS_FILE = RESOURCE_PATH + '/counter-fitted-vectors.en.pkl.gz'
+THESAURUS_FILE = RESOURCE_PATH + "/counter-fitted-vectors.en.pkl.gz"
 WEAK_WORDS = WEAK_ADJS + WEAK_NOUNS + WEAK_VERBS
 WEAK_WORDS = []
 

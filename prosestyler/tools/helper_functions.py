@@ -40,9 +40,9 @@ def fromx_to_id(fromx, tox, tokens):
 def pretty_print_prose(string: str, *args, **kwargs):
     """Print a string to the screen with proper linebreaks."""
     out = pformat(string, *args, **kwargs)
-    out = re.sub(r'["\']\n ["\']', '\n', out)
+    out = re.sub(r'["\']\n ["\']', "\n", out)
     # Strip parenthesis and quotes from beginning and end.
-    if out[1] == '(':
+    if out[1] == "(":
         out = out[2:-2]
     else:
         out = out[1:-1]
@@ -51,9 +51,9 @@ def pretty_print_prose(string: str, *args, **kwargs):
 
 def now_checking_banner(check):
     """Print a pretty banner on the output."""
-    mystr = f'---  Now Checking {str(check).title()}!  ---'
-    dashstr = '-' * len(mystr)
-    print('\n\n')
+    mystr = f"---  Now Checking {str(check).title()}!  ---"
+    dashstr = "-" * len(mystr)
+    print("\n\n")
     print(dashstr)
     print(mystr)
     print(dashstr)
@@ -63,8 +63,8 @@ def now_checking_banner(check):
 
 def print_rows(lis, max_rows=21, cols=3, item_width=18):
     """Given a list of items, print them, numbered, in columns and rows."""
-    if len(lis) == 1 and lis[0] == '':
-        print(' (1) <delete>')
+    if len(lis) == 1 and lis[0] == "":
+        print(" (1) <delete>")
         return
 
     max_items = max_rows * cols
@@ -74,17 +74,17 @@ def print_rows(lis, max_rows=21, cols=3, item_width=18):
         cols = 1
 
     # Make a string template holding each column.
-    mystr = '{: >4} {: <%s}' % (item_width) * cols
+    mystr = f"{{: >4}} {{: <{(item_width) * cols}}}"
     nrows = ceil(len(lis) / cols)
     rows = [[]] * nrows
     row_ind = 0
     # Order stuff to read down each column.
     # (rather than across each row).
     for i, j in enumerate(lis):
-        rows[row_ind] = rows[row_ind] + ['(%s)' % (i + 1), j]
+        rows[row_ind] = rows[row_ind] + [f"({(i+1)})", j]
         row_ind = (row_ind + 1) % nrows
     while row_ind != 0:
-        rows[row_ind] = rows[row_ind] + ['', '']
+        rows[row_ind] = rows[row_ind] + ["", ""]
         row_ind = (row_ind + 1) % nrows
     for row in rows:
         print(mystr.format(*row))

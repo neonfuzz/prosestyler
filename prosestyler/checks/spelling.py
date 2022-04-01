@@ -23,7 +23,7 @@ class Speller(BaseCheck):
     Text is saved and cleaned after each iteration.
     """
 
-    def __init__(self, lang='en_US'):
+    def __init__(self, lang="en_US"):
         """
         Initialize Speller.
 
@@ -35,7 +35,7 @@ class Speller(BaseCheck):
 
     def __repr__(self):
         """Represent Speller with a string."""
-        return 'Spelling'
+        return "Spelling"
 
     def _check_sent(self, sentence, ignore_list=None):
         errors, suggests, ignore_list, messages = super()._check_sent(
@@ -47,9 +47,9 @@ class Speller(BaseCheck):
                 # If token is part of a named entity, don't spellcheck.
                 continue
             if (
-                tok.text == ' '
-                or tok.text == '\n'
-                or tok.text == '\n\n'
+                tok.text == " "
+                or tok.text == "\n"
+                or tok.text == "\n\n"
                 or tok.text in punctuation
             ):
                 continue

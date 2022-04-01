@@ -14,7 +14,7 @@ from .base_check import BaseCheck
 
 def _check_consecutive(span):
     """Check for noun phrases with 4+ nouns."""
-    nouns = [t for t in span if t.tag_.startswith('NN')]
+    nouns = [t for t in span if t.tag_.startswith("NN")]
     return len(nouns) >= 4
 
 
@@ -52,15 +52,15 @@ class Nouns(BaseCheck):
     """
 
     _description = (
-        'Excessive noun phrases are exactly what they sound like... '
-        'phrases composed of far too many nouns. They are difficult to '
-        'parse and slow down your reader. Try breaking the phrase into '
-        'smaller chunks and spreading them throughout your sentence.'
+        "Excessive noun phrases are exactly what they sound like... "
+        "phrases composed of far too many nouns. They are difficult to "
+        "parse and slow down your reader. Try breaking the phrase into "
+        "smaller chunks and spreading them throughout your sentence."
     )
 
     def __repr__(self):
         """Represent Nouns with a string."""
-        return 'Excessive Noun Phrases'
+        return "Excessive Noun Phrases"
 
     def _check_sent(self, sentence, ignore_list=None):
         errors, suggests, ignore_list, messages = super()._check_sent(

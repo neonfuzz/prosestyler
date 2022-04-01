@@ -34,11 +34,11 @@ class BaseCheck:
         Text is saved and cleaned after each iteration.
     """
 
-    _description = ''
+    _description = ""
 
     def __repr__(self):
         """One- or two-word description of the check."""
-        return ''
+        return ""
 
     @property
     def description(self) -> str:
@@ -65,25 +65,25 @@ class BaseCheck:
         print()
         inds = range(indices[0], indices[-1] + 1)
         colors.tokenprint(tokens, inds)
-        phrase = ''.join([tokens[i] for i in inds])
+        phrase = "".join([tokens[i] for i in inds])
         if message is not None:
             print()
-            print('REASON:', message)
-        print('Possible suggestions for "%s":' % phrase)
+            print("REASON:", message)
+        print(f'Possible suggestions for "{phrase}":')
 
         # Print list of suggestions, as well as custom options.
         print_rows(suggestions)
-        print(' (0) Leave be.')
+        print(" (0) Leave be.")
         if can_replace_sent is True:
-            print('(ss) Edit entire sentence.')
-        print(' (?) Input your own.')
+            print("(ss) Edit entire sentence.")
+        print(" (?) Input your own.")
 
         # Get user input.
         # If a number, replace with suggestion.
         # If 0, return sentence as-is.
         # If 'ss', ask user to replace entire sentence.
         # Else: return user-input.
-        user_input = input('Your choice: ')
+        user_input = input("Your choice: ")
         try:
             user_choice = int(user_input)
             if len(suggestions) >= user_choice > 0:
@@ -93,12 +93,12 @@ class BaseCheck:
                     tokens[: indices[0]] + [ans] + tokens[indices[-1] + 1 :]
                 )
             elif user_choice != 0:
-                print('\n\n-------------\nINVALID VALUE\n-------------')
+                print("\n\n-------------\nINVALID VALUE\n-------------")
                 tokens = self._suggest_toks(
                     tokens, indices, suggestions, can_replace_sent
                 )
         except ValueError:
-            if user_input == 'ss':
+            if user_input == "ss":
                 sent = visual_edit(tokens, indices)
                 tokens = gen_tokens(sent)
             else:
@@ -128,6 +128,7 @@ class BaseCheck:
             ignore_list (list of 2-tuples) - errors to ignore
             messages (list of strings) - error message to display, if any
         """
+        # pylint: disable=no-self-use,unused-argument
         # TO SUB-CLASS.
         errors = []
         suggests = []
@@ -162,7 +163,7 @@ class BaseCheck:
                     suggests = suggests[1:]
                     messages = messages[1:]
                 else:
-                    tmp_sent = Sentence(''.join(new_tokens))
+                    tmp_sent = Sentence("".join(new_tokens))
                     errors, suggests, ignore_list, messages = self._check_sent(
                         tmp_sent, ignore_list
                     )

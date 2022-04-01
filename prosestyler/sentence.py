@@ -39,7 +39,7 @@ from spacy.util import (
 )
 
 
-@spacy.Language.component('_custom_sent_boundaries')
+@spacy.Language.component("_custom_sent_boundaries")
 def _custom_sent_boundaries(doc):
     """
     Create custom sentence tokenizing boundaries for spaCy.
@@ -60,18 +60,18 @@ def _custom_sent_boundaries(doc):
         if token.text in punctuation:
             doc[token.i].is_sent_start = False
         if (
-            token.text == 'al'
-            and doc[token.i + 1].text == '.'
-            and doc[token.i - 1].text == '.'
-            and doc[token.i - 2].text == 'et'
+            token.text == "al"
+            and doc[token.i + 1].text == "."
+            and doc[token.i - 1].text == "."
+            and doc[token.i - 2].text == "et"
         ):
             doc[token.i].is_sent_start = False
-        if token.text == 'i.e' and doc[token.i + 1].text == '.':
+        if token.text == "i.e" and doc[token.i + 1].text == ".":
             doc[token.i + 2].is_sent_start = False
     return doc
 
 
-@spacy.Language.component('_custom_token_boundaries')
+@spacy.Language.component("_custom_token_boundaries")
 def _custom_token_boundaries(doc):
     """
     Create custom token boundaries that keep abbreviations together.
@@ -88,8 +88,8 @@ def _custom_token_boundaries(doc):
     merge_list = []
     for token in doc:
         if (
-            token.text in ['et', 'al', 'i.e', 'e.g']
-            and doc[token.i + 1].text == '.'
+            token.text in ["et", "al", "i.e", "e.g"]
+            and doc[token.i + 1].text == "."
         ):
             merge_list.append(doc[token.i : token.i + 2])
     merge_list = filter_spans(merge_list)
@@ -110,7 +110,7 @@ class TokenizeAndParse:
         pass arguments to `nlp`
     """
 
-    def __init__(self, loadfile='en_core_web_sm'):
+    def __init__(self, loadfile="en_core_web_sm"):
         """
         Initialize TokenizeAndParse.
 
@@ -133,7 +133,7 @@ class TokenizeAndParse:
         # the effect of keeping e.g. contractions
         # together as one token.
         suffixes = TOKENIZER_SUFFIXES
-        for suf in ["'s", "'S", '’s', '’S']:
+        for suf in ["'s", "'S", "’s", "’S"]:
             # Possessives are handled in suffixes.
             # We will not split on these.
             suffixes.remove(suf)
@@ -149,8 +149,8 @@ class TokenizeAndParse:
         self._nlp.tokenizer = tokenizer
 
         # Custom sentence and token boundaries.
-        self._nlp.add_pipe('_custom_sent_boundaries', before='parser')
-        self._nlp.add_pipe('_custom_token_boundaries', before='parser')
+        self._nlp.add_pipe("_custom_sent_boundaries", before="parser")
+        self._nlp.add_pipe("_custom_token_boundaries", before="parser")
 
     @property
     def nlp(self):
@@ -250,7 +250,7 @@ class Sentence:
 
     @tokens.setter
     def tokens(self, tokens):
-        self._string = ''.join(tokens)
+        self._string = "".join(tokens)
         self._doc = NLP(self._string)
 
     @property
@@ -280,9 +280,9 @@ class Sentence:
 
     def clean(self):
         """Remove unnecessary whitespace."""
-        new_string = self._string.strip(' ')
-        for i in ',:;.?! ':
-            new_string = new_string.replace(' %s' % i, i)
+        new_string = self._string.strip(" ")
+        for i in ",:;.?! ":
+            new_string = new_string.replace(" %s" % i, i)
         if new_string != self._string:
             self._string = new_string
             self._doc = NLP(self._string)
@@ -319,8 +319,8 @@ class Text:
         Optional arguments:
             save_file (str) - the output file to be used between each step
         """
-        self._string = string.replace('“', '"').replace('”', '"')
-        self._string = self._string.replace('‘', "'").replace('’', "'")
+        self._string = string.replace("“", '"').replace("”", '"')
+        self._string = self._string.replace("‘", "'").replace("’", "'")
         self._sentences = [Sentence(x) for x in gen_sent(self._string)]
         self._tokens = None
         self._words = None
@@ -330,7 +330,7 @@ class Text:
         # Save for the very first time.
         if save_file is None:
             save_file = (
-                ''.join(self._words[:3]) + ' ' + str(datetime.now()) + '.txt'
+                "".join(self._words[:3]) + " " + str(datetime.now()) + ".txt"
             )
         self.save_file = save_file
         self.save()
@@ -349,15 +349,15 @@ class Text:
 
     def save(self):
         """Save the object to file."""
-        with open(self.save_file, 'w') as myfile:
+        with open(self.save_file, "w") as myfile:
             myfile.write(self._string)
 
     def clean(self):
         """Remove unneccesary whitespace."""
         sents = [s.clean() for s in self._sentences]
 
-        self._string = ' '.join([str(s) for s in sents])
-        self._string = re.sub(r'\n+\s+', r'\n\n', self._string)
+        self._string = " ".join([str(s) for s in sents])
+        self._string = re.sub(r"\n+\s+", r"\n\n", self._string)
         self._sentences = sents
         self._tokens = [t for s in self._sentences for t in s.tokens]
         self._words = [w for s in self._sentences for w in s.words]
@@ -375,8 +375,8 @@ class Text:
     @string.setter
     def string(self, string):
         self._string = string
-        self._string = self._string.replace('“', '"').replace('”', '"')
-        self._string = self._string.replace('‘', "'").replace('’', "'")
+        self._string = self._string.replace("“", '"').replace("”", '"')
+        self._string = self._string.replace("‘", "'").replace("’", "'")
         self._sentences = gen_sent(self._string)
         self.clean()
 

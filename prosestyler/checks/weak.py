@@ -28,17 +28,17 @@ class Weak(BaseCheck):
     """
 
     _description = (
-        'Some words are just weak and boring, and make your writing '
-        'sound uninspired. Make heavy use of the thesaurus and bring '
-        'your writing to life. Tip: These suggestions are just that. '
+        "Some words are just weak and boring, and make your writing "
+        "sound uninspired. Make heavy use of the thesaurus and bring "
+        "your writing to life. Tip: These suggestions are just that. "
         "Don't go overboard on fancy jargon or your writing will sound "
         'pompous. If the original "weak" word is the best fit, by all '
-        'means stick with that one.'
+        "means stick with that one."
     )
 
     def __repr__(self):
         """Represent Weak with a string."""
-        return 'Weak Words'
+        return "Weak Words"
 
     def _check_sent(self, sentence, ignore_list=None):
         errors, suggests, ignore_list, messages = super()._check_sent(
@@ -57,8 +57,8 @@ class Weak(BaseCheck):
 
             if tup not in ignore_list:
                 if (
-                    pos.startswith('V')
-                    and not node.dep_.startswith('aux')
+                    pos.startswith("V")
+                    and not node.dep_.startswith("aux")
                     and lemma in WEAK_VERBS
                 ):
                     errors += [tup]

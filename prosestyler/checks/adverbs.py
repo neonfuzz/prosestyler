@@ -22,7 +22,7 @@ class Adverbs(BaseCheck):
     """
 
     _description = (
-        'Adverbs signal a weak verb. Try replacing both with a more '
+        "Adverbs signal a weak verb. Try replacing both with a more "
         'descriptive verb. e.g., "He ran really fast" could become "he '
         'sprinted" or "he dashed." "They walked easily" could become '
         '"they ambled" or "they glided."'
@@ -30,7 +30,7 @@ class Adverbs(BaseCheck):
 
     def __repr__(self):
         """Represent Adverbs with a string."""
-        return 'Adverbs'
+        return "Adverbs"
 
     def _check_sent(self, sentence, ignore_list=None):
         errors, suggests, ignore_list, messages = super()._check_sent(
@@ -41,7 +41,7 @@ class Adverbs(BaseCheck):
             [
                 n
                 for n in sentence.nodes
-                if 'advmod' in [c.dep_ for c in n.children]
+                if "advmod" in [c.dep_ for c in n.children]
             ]
         )
         first_i = sentence.nodes[0].i
@@ -49,7 +49,7 @@ class Adverbs(BaseCheck):
             adv_node_ids = [
                 c.i - first_i
                 for c in node.children
-                if c.dep_ == 'advmod' and c.text.endswith('ly')
+                if c.dep_ == "advmod" and c.text.endswith("ly")
             ]
             ids = [sentence.inds[i] for i in adv_node_ids]
             ids += [sentence.inds[node.i - first_i]]

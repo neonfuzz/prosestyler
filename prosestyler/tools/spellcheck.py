@@ -41,7 +41,7 @@ class SpellCheck:
         """Get Enchant checker, lazy loaded."""
         if self._checker is None:
             self._checker = enchant.DictWithPWL(
-                self._lang, RESOURCE_PATH + '/scientific_word_list.txt'
+                self._lang, RESOURCE_PATH + "/scientific_word_list.txt"
             )
         return self._checker
 
