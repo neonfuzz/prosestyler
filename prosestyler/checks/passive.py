@@ -38,13 +38,19 @@ def _is_proper(obj):
 def _subj_to_obj(subj):
     if isinstance(subj, list):
         return "[OBJECT]"
-    return SUBJ_OBJ.get(subj.lower_, subj.text)
+    try:
+        return SUBJ_OBJ.get(subj.lower_, subj.text)
+    except AttributeError:
+        return subj.text
 
 
 def _obj_to_subj(obj):
     if isinstance(obj, list):
         return "[SUBJECT]"
-    subj = {v: k for k, v in SUBJ_OBJ.items()}.get(obj.lower_, obj.text)
+    try:
+        subj = {v: k for k, v in SUBJ_OBJ.items()}.get(obj.lower_, obj.text)
+    except AttributeError:
+        subj = obj.text
     if subj == "i":
         subj = "I"
     return subj
