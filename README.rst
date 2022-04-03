@@ -8,13 +8,13 @@ Usage
 
 ::
 
-    prosestyler_app [-h] [-o outfile] [-d dictionary] [-l check_name [check_name ...]] [--all]
-                    [--spelling | --no-spelling] [--grammar | --no-grammar]
-                    [--cliches | --no-cliches] [--passive | --no-passive]
-                    [--nominalizations | --no-nominalizations] [--filler | --no-filler]
-                    [--adverbs | --no-adverbs] [--noun_phrases | --no-noun_phrases]
-                    [--homophones | --no-homophones] [--weak | --no-weak] [--lint | --no-lint]
-                    file
+    python -m prosestyler [-h] [-o outfile] [-d dictionary] [-l check_name [check_name ...]]
+                          [--all] [--spelling | --no-spelling] [--grammar | --no-grammar]
+                          [--cliches | --no-cliches] [--passive | --no-passive]
+                          [--nominalizations | --no-nominalizations] [--filler | --no-filler]
+                          [--adverbs | --no-adverbs] [--noun_phrases | --no-noun_phrases]
+                          [--homophones | --no-homophones] [--weak | --no-weak]
+                          [--lint | --no-lint] file
 
 positional arguments:
 ^^^^^^^^^^^^^^^^^^^^^
@@ -57,7 +57,6 @@ Installation
 
     python3 -m spacy download en_core_web_sm
     pip install .
-    export PATH=$PATH:$(pwd)
 
 Requirements
 ^^^^^^^^^^^^
